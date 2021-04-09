@@ -62,7 +62,10 @@ module.exports = function (app) {
 		"use strict";
 
 
-		var hl7_message = (req.body);
+		//var hl7_message = (req.body);
+
+        var hl7_message = {"MESSAGE_HEADER":{"SENDING_APPLICATION":"KENYAEMR","SENDING_FACILITY":"13939","RECEIVING_APPLICATION":"IL","RECEIVING_FACILITY":"13939","MESSAGE_DATETIME":"20210212090359","SECURITY":"","MESSAGE_TYPE":"SIU^S12","PROCESSING_ID":"P"},"PATIENT_IDENTIFICATION":{"EXTERNAL_PATIENT_ID":{"ID":"","IDENTIFIER_TYPE":"GODS_NUMBER","ASSIGNING_AUTHORITY":"MPI"},"INTERNAL_PATIENT_ID":[{"ID":"1393915477","IDENTIFIER_TYPE":"CCC_NUMBER","ASSIGNING_AUTHORITY":"CCC"}],"PATIENT_NAME":{"FIRST_NAME":"JOHN","MIDDLE_NAME":"OTIENO","LAST_NAME":"LUSI"},"MOTHER_NAME":{"FIRST_NAME":"","MIDDLE_NAME":"","LAST_NAME":""},"DATE_OF_BIRTH":"","SEX":"","PATIENT_ADDRESS":{"PHYSICAL_ADDRESS":{"VILLAGE":"","WARD":"","SUB_COUNTY":"","COUNTY":"","GPS_LOCATION":"","NEAREST_LANDMARK":""},"POSTAL_ADDRESS":""},"PHONE_NUMBER":"","MARITAL_STATUS":"","DEATH_DATE":"","DEATH_INDICATOR":"","DATE_OF_BIRTH_PRECISION":""},"APPOINTMENT_INFORMATION":[{"APPOINTMENT_REASON":"","ACTION_CODE":"A","APPOINTMENT_PLACING_ENTITY":"KENYAEMR","APPOINTMENT_STATUS":"PENDING","APPOINTMENT_TYPE":"","APPOINTMENT_NOTE":"N/A","APPOINTMENT_DATE":"20210507","PLACER_APPOINTMENT_NUMBER":{"ENTITY":"KENYAEMR","NUMBER":""}}]}
+
 
        // res.send(true);
 
@@ -241,6 +244,10 @@ module.exports = function (app) {
                     var PATIENT_TYPE = hl7_message.PATIENT_VISIT.PATIENT_TYPE;
                     var SENDING_FACILITY;
                     var GROUP_ID;
+                    var COUNTY = hl7_message.PATIENT_IDENTIFICATION.PATIENT_ADDRESS.PHYSICAL_ADDRESS.COUNTY;
+                    var SUB_COUNTY = hl7_message.PATIENT_IDENTIFICATION.PATIENT_ADDRESS.PHYSICAL_ADDRESS.SUB_COUNTY;
+                    var WARD = hl7_message.PATIENT_IDENTIFICATION.PATIENT_ADDRESS.PHYSICAL_ADDRESS.WARD;
+                    var VILLAGE = hl7_message.PATIENT_IDENTIFICATION.PATIENT_ADDRESS.PHYSICAL_ADDRESS.VILLAGE;
 
                     var result = get_json(hl7_message);
 
@@ -327,7 +334,7 @@ module.exports = function (app) {
                             return;
                         } else {
                             var gateway_sql =
-                                "Insert into tbl_client (f_name,m_name,l_name,dob,clinic_number,mfl_code,gender,marital,phone_no,GODS_NUMBER,group_id, SENDING_APPLICATION, PATIENT_SOURCE, db_source, enrollment_date, client_type, partner_id) VALUES ('" +
+                                "Insert into tbl_client (f_name,m_name,l_name,dob,clinic_number,mfl_code,gender,marital,phone_no,GODS_NUMBER,group_id, SENDING_APPLICATION, PATIENT_SOURCE, db_source, enrollment_date, client_type, locator_county, locator_sub_county, locator_ward, locator_village, partner_id) VALUES ('" +
                                 FIRST_NAME +
                                 "', '" +
                                 MIDDLE_NAME +
@@ -357,6 +364,16 @@ module.exports = function (app) {
                                 SENDING_APPLICATION +
                                 "','" +
                                 new_enroll_date +
+                                "','" +
+                                PATIENT_TYPE +
+                                "','" +
+                                COUNTY +
+                                "','" +
+                                SUB_COUNTY +
+                                "','" +
+                                WARD +
+                                "','" +
+                                VILLAGE +
                                 "','" +
                                 PATIENT_TYPE +
                                 "',(SELECT  partner_id FROM tbl_partner_facility WHERE mfl_code ='"+ SENDING_FACILITY +"'))";
@@ -397,6 +414,13 @@ module.exports = function (app) {
                     var SENDING_FACILITY;
                     var GROUP_ID;
                     var TOD_DATE = moment().format("YYYY-MM-DD");
+                    var COUNTY = hl7_message.PATIENT_IDENTIFICATION.PATIENT_ADDRESS.PHYSICAL_ADDRESS.COUNTY;
+                    var SUB_COUNTY = hl7_message.PATIENT_IDENTIFICATION.PATIENT_ADDRESS.PHYSICAL_ADDRESS.SUB_COUNTY;
+                    var WARD = hl7_message.PATIENT_IDENTIFICATION.PATIENT_ADDRESS.PHYSICAL_ADDRESS.WARD;
+                    var VILLAGE = hl7_message.PATIENT_IDENTIFICATION.PATIENT_ADDRESS.PHYSICAL_ADDRESS.VILLAGE;
+                    var DEATH_DATE = hl7_message.PATIENT_IDENTIFICATION.DEATH_DATE;
+                    var DEATH_INDICATOR = hl7_message.PATIENT_IDENTIFICATION.DEATH_INDICATOR;
+
         
                     var result = get_json(hl7_message);
         
@@ -474,6 +498,12 @@ module.exports = function (app) {
                         console.log("Invalid CCC NUMBER");
                         return;
                     }
+
+                    if (DEATH_DATE !== "" && DEATH_INDICATOR === "Y") {
+                        DEATH_INDICATOR = "Deceased";
+                    } else if (DEATH_INDICATOR === "N") {
+                        DEATH_INDICATOR = "Active";
+                    }
         
                     connection.connect(function(err) {
                         if (err) {
@@ -499,6 +529,20 @@ module.exports = function (app) {
                                 PHONE_NUMBER +
                                 "',group_id='" +
                                 GROUP_ID +
+                                "',client_type='" +
+                                PATIENT_TYPE +
+                                "',locator_county='" +
+                                COUNTY +
+                                "',locator_sub_county='" +
+                                SUB_COUNTY + 
+                                "',locator_ward='" +
+                                WARD +
+                                "',locator_village='" +
+                                VILLAGE + 
+                                "',date_deceased='" +
+                                DEATH_DATE + 
+                                "',status='" +
+                                DEATH_INDICATOR + 
                                 "',partner_id=(SELECT  partner_id FROM tbl_partner_facility WHERE mfl_code =' "+ SENDING_FACILITY 
                                 +"') WHERE clinic_number='" +
                                 CCC_NUMBER +

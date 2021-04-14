@@ -29,6 +29,19 @@ connection.connect(function(err) {
     console.log("Table created", result);
   });
 
+  var users_table = 'CREATE TABLE users(id int primary key auto_increment, username VARCHAR(50), password VARCHAR(255), created_at timestamp DEFAULT now(), updated_at timestamp DEFAULT now())';
+  connection.query(users_table, function(err, result) {
+    if(err) throw err;
+    console.log("Table created", result);
+  });
+
+  var create_user = "INSERT INTO users(username, password) VALUES ('admin', 'admin')";
+  connection.query(create_user, function (err, result) {
+    if(err) throw err;
+    console.log("User inserted")
+
+  })
+
   connection.end();
 
 });

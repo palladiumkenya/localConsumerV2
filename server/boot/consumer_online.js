@@ -118,14 +118,14 @@ module.exports = function (app) {
                                     console.log(response.body)
     
                                     //update status of updated appointment
-                                    result = connection.query("update clients set processed ='1', updated_at ='"+DATE_TODAY+"'+,send_log='" +response.body +"' where id="+result.id+" ")
+                                    result = connection.query("update clients set processed ='1', date_processed ='"+DATE_TODAY+"'+,send_log='" +response.body +"' where id="+result.id+" ")
                                 })
                                 .catch(function (error){
     
                                     console.log(error)
     
                                     //update appointment with error
-                                    result = connection.query("update clients set processed ='1', updated_at ='"+DATE_TODAY+"',send_log='" +error +"' where id="+result.id+" ")
+                                    result = connection.query("update clients set processed ='1', date_processed ='"+DATE_TODAY+"',send_log='" +error +"' where id="+result.id+" ")
     
                                 })
                                 
@@ -145,14 +145,14 @@ module.exports = function (app) {
                                     console.log(response.body)
     
                                     //update status of updated appointment
-                                    result = connection.query("update appointments set processed ='1', updated_at ='"+DATE_TODAY+"'+,send_log='" +response.body +"' where id="+result.id+" ")
+                                    result = connection.query("update appointments set processed ='1', date_processed ='"+DATE_TODAY+"'+,send_log='" +response.body +"' where id="+result.id+" ")
                                 })
                                 .catch(function (error){
     
                                     console.log(error)
     
                                     //update appointment with error
-                                    result = connection.query("update appointments set processed ='1', updated_at ='"+DATE_TODAY+"'+,send_log='" +error +"' where id="+result.id+" ")
+                                    result = connection.query("update appointments set processed ='1', date_processed ='"+DATE_TODAY+"'+,send_log='" +error +"' where id="+result.id+" ")
     
                                 })
                                 

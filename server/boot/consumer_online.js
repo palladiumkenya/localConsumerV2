@@ -124,14 +124,14 @@ module.exports = function (app) {
                                 console.log(response.body)
 
                                 //update status of updated appointment
-                                result = connection.query("update clients set processed ='1', date_processed ='"+DATE_TODAY+"'+send_log='" +response.data +"' where id="+result.id+" ")
+                                result = connection.query("update clients set processed ='1', date_processed ='"+DATE_TODAY+"', send_log='" +response.data +"' where id="+result.id+" ")
                             })
                             .catch(function (error){
 
                                 console.log(error)
 
                                 //update appointment with error
-                                result = connection.query("update clients set date_processed ='"+DATE_TODAY+"'send_log='" +error +"' where id="+result.id+" ")
+                                result = connection.query("update clients set date_processed ='"+DATE_TODAY+"', send_log='" +error +"' where id="+result.id+" ")
 
                             })
                             
@@ -216,59 +216,54 @@ module.exports = function (app) {
             "SENDING_FACILITY":"11239",
             "RECEIVING_APPLICATION":"IL",
             "RECEIVING_FACILITY":"11239",
-            "MESSAGE_DATETIME":"20210415070959",
+            "MESSAGE_DATETIME":"20210416103459",
             "SECURITY":"",
-            "MESSAGE_TYPE":"ADT^A04",
+            "MESSAGE_TYPE":"ADT^A08",
             "PROCESSING_ID":"P"
             },
             "PATIENT_IDENTIFICATION":{
-            "EXTERNAL_PATIENT_ID":{
-            "ID":"",
-            "IDENTIFIER_TYPE":"GODS_NUMBER",
-            "ASSIGNING_AUTHORITY":"MPI"
+                "EXTERNAL_PATIENT_ID":{
+                "ID":"",
+                "IDENTIFIER_TYPE":"GODS_NUMBER",
+                "ASSIGNING_AUTHORITY":"MPI"
+                },
+                "INTERNAL_PATIENT_ID":[
+                {
+                "ID":"1123900341",
+                "IDENTIFIER_TYPE":"CCC_NUMBER",
+                "ASSIGNING_AUTHORITY":"CCC"
+                }
+                ],
+            "PATIENT_NAME":{
+            "FIRST_NAME":"LUCY",
+            "MIDDLE_NAME":"TEST",
+            "LAST_NAME":"NYOKABI"
             },
-        "INTERNAL_PATIENT_ID":[
-            {
-            "ID":"556677",
-            "IDENTIFIER_TYPE":"PATIENT_CLINIC_NUMBER",
-            "ASSIGNING_AUTHORITY":"CCC"
+            "MOTHER_NAME":{
+            "FIRST_NAME":"",
+            "MIDDLE_NAME":"",
+            "LAST_NAME":""
             },
-            {
-            "ID":"6677338871",
-            "IDENTIFIER_TYPE":"CCC_NUMBER",
-            "ASSIGNING_AUTHORITY":"CCC"
-            }
-        ],
-        "PATIENT_NAME":{
-        "FIRST_NAME":"WAKUTEST",
-        "MIDDLE_NAME":"",
-        "LAST_NAME":"JAMAA"
-        },
-        "MOTHER_NAME":{
-        "FIRST_NAME":"",
-        "MIDDLE_NAME":"",
-        "LAST_NAME":""
-        },
-        "DATE_OF_BIRTH":"19770615",
-        "SEX":"M",
-        "PATIENT_ADDRESS":{
-        "PHYSICAL_ADDRESS":{
-        "VILLAGE":"",
-        "WARD":"",
-        "SUB_COUNTY":"NTUNENE",
-        "COUNTY":"MERU",
-        "GPS_LOCATION":"",
-        "NEAREST_LANDMARK":""
-        },
-        "POSTAL_ADDRESS":""
-        },
-        "PHONE_NUMBER":"",
-        "MARITAL_STATUS":"",
-        "DEATH_DATE":"",
-        "DEATH_INDICATOR":"",
-        "DATE_OF_BIRTH_PRECISION":"ESTIMATED"
-        },
-        "NEXT_OF_KIN":[
+            "DATE_OF_BIRTH":"19880615",
+            "SEX":"F",
+            "PATIENT_ADDRESS":{
+            "PHYSICAL_ADDRESS":{
+            "VILLAGE":"",
+            "WARD":"",
+            "SUB_COUNTY":"SIGOMERE",
+            "COUNTY":"SIAYA",
+            "GPS_LOCATION":"",
+            "NEAREST_LANDMARK":""
+            },
+            "POSTAL_ADDRESS":""
+            },
+            "PHONE_NUMBER":"0734678900",
+            "MARITAL_STATUS":"",
+            "DEATH_DATE":"",
+            "DEATH_INDICATOR":"",
+            "DATE_OF_BIRTH_PRECISION":"ESTIMATED"
+            },
+            "NEXT_OF_KIN":[
             {
             "NOK_NAME":{
             "FIRST_NAME":"",
@@ -282,14 +277,39 @@ module.exports = function (app) {
             "DATE_OF_BIRTH":"",
             "CONTACT_ROLE":""
             }
-        ],
-        "PATIENT_VISIT":{
-        "VISIT_DATE":"20210415",
-        "PATIENT_SOURCE":"OUTPATIENT",
-        "HIV_CARE_ENROLLMENT_DATE":"20210415",
-        "PATIENT_TYPE":""
-        },
-        }
+            ],
+            "PATIENT_VISIT":{
+            "VISIT_DATE":"20210416",
+            "PATIENT_SOURCE":"VCT",
+            "HIV_CARE_ENROLLMENT_DATE":"20210416",
+            "PATIENT_TYPE":""
+            },
+            "OBSERVATION_RESULT":[
+            {
+            "UNITS":"",
+            "VALUE_TYPE":"NM",
+            "OBSERVATION_VALUE":"1",
+            "OBSERVATION_DATETIME":"20210416",
+            "CODING_SYSTEM":"",
+            "ABNORMAL_FLAGS":"N",
+            "OBSERVATION_RESULT_STATUS":"F",
+            "SET_ID":"",
+            "OBSERVATION_IDENTIFIER":"WHO_STAGE"
+            },
+            {
+            "UNITS":"",
+            "VALUE_TYPE":"CE",
+            "OBSERVATION_VALUE":"AF1A",
+            "OBSERVATION_DATETIME":"20210416",
+            "CODING_SYSTEM":"NASCOP_CODES",
+            "ABNORMAL_FLAGS":"N",
+            "OBSERVATION_RESULT_STATUS":"F",
+            "SET_ID":"",
+            "OBSERVATION_IDENTIFIER":"CURRENT_REGIMEN"
+            }
+            ]
+            }
+        
         
         var DATE_TODAY = moment(new Date()).format("YYYY-MM-DD");
 
@@ -322,6 +342,7 @@ module.exports = function (app) {
                 var VILLAGE = hl7_message.PATIENT_IDENTIFICATION.PATIENT_ADDRESS.PHYSICAL_ADDRESS.VILLAGE;
                 var DEATH_DATE = hl7_message.PATIENT_IDENTIFICATION.DEATH_DATE;
                 var DEATH_INDICATOR = hl7_message.PATIENT_IDENTIFICATION.DEATH_INDICATOR;
+                var ART_DATE;
 
                 var result = get_json(hl7_message);
 
@@ -390,12 +411,23 @@ module.exports = function (app) {
                             PATIENT_CLINIC_NUMBER = result[i].value;
                         }
                     }
+
+                    if(key == "OBSERVATION_DATETIME") {
+                        if (result[i + 5].value == "CURRENT_REGIMEN") {
+                            ART_DATE = result[i].value;
+                        }
+                    }
                 }
 
                 var enroll_year = ENROLLMENT_DATE.substring(0, 4);
                 var enroll_month = ENROLLMENT_DATE.substring(4, 6);
                 var enroll_day = ENROLLMENT_DATE.substring(6, 8);
                 var new_enroll_date = enroll_year + "-" + enroll_month + "-" + enroll_day;
+
+                var art_year = ART_DATE.substring(0, 4);
+                var art_month = ART_DATE.substring(4, 6);
+                var art_day = ART_DATE.substring(6, 8);
+                var new_art_date = art_year + "-" + art_month + "-" + art_day;
 
                 if(DEATH_DATE === "") {
                     var new_death_date = null;
@@ -431,7 +463,7 @@ module.exports = function (app) {
                         if(new_death_date === null) {
 
                             var gateway_sql =
-                            "Insert into clients (f_name,m_name,l_name,dob,clinic_number,patient_clinic_number,mfl_code,gender,marital,phone_no,GODS_NUMBER,group_id, SENDING_APPLICATION, PATIENT_SOURCE, db_source, enrollment_date, client_type, locator_county, locator_sub_county, locator_ward, locator_village, message_type, date_deceased, death_status, processed) VALUES ('" +
+                            "Insert into clients (f_name,m_name,l_name,dob,clinic_number,patient_clinic_number,mfl_code,gender,marital,phone_no,GODS_NUMBER,group_id, SENDING_APPLICATION, PATIENT_SOURCE, db_source, enrollment_date, art_date, client_type, locator_county, locator_sub_county, locator_ward, locator_village, message_type, date_deceased, death_status, processed) VALUES ('" +
                             FIRST_NAME +
                             "', '" +MIDDLE_NAME +
                             "','" +LAST_NAME +
@@ -448,6 +480,7 @@ module.exports = function (app) {
                             "','" +PATIENT_SOURCE +
                             "','" +SENDING_APPLICATION +
                             "','" +new_enroll_date +
+                            "','" +new_art_date +
                             "','" +PATIENT_TYPE +
                             "','" +COUNTY +
                             "','" +SUB_COUNTY +
@@ -462,7 +495,7 @@ module.exports = function (app) {
                         } else {
 
                             var gateway_sql =
-                            "Insert into clients (f_name,m_name,l_name,dob,clinic_number,patient_clinic_number,mfl_code,gender,marital,phone_no,GODS_NUMBER,group_id, SENDING_APPLICATION, PATIENT_SOURCE, db_source, enrollment_date, client_type, locator_county, locator_sub_county, locator_ward, locator_village, message_type, date_deceased, death_status, processed) VALUES ('" +
+                            "Insert into clients (f_name,m_name,l_name,dob,clinic_number,patient_clinic_number,mfl_code,gender,marital,phone_no,GODS_NUMBER,group_id, SENDING_APPLICATION, PATIENT_SOURCE, db_source, enrollment_date, art_date, client_type, locator_county, locator_sub_county, locator_ward, locator_village, message_type, date_deceased, death_status, processed) VALUES ('" +
                             FIRST_NAME +
                             "', '" +MIDDLE_NAME +
                             "','" +LAST_NAME +
@@ -479,6 +512,7 @@ module.exports = function (app) {
                             "','" +PATIENT_SOURCE +
                             "','" +SENDING_APPLICATION +
                             "','" +new_enroll_date +
+                            "','" +art_date +
                             "','" +PATIENT_TYPE +
                             "','" +COUNTY +
                             "','" +SUB_COUNTY +
@@ -493,8 +527,6 @@ module.exports = function (app) {
 
                         }
 
-                        
-    
                         // Use the connection
                         connection.query(gateway_sql, function(error, results, fields) {
                             // And done with the connection.

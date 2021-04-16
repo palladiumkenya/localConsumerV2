@@ -30,6 +30,7 @@ var express = require("express");
 
 var bodyParser = require("body-parser");
 
+var connection = mysql.createConnection(config_local.localDatabaseOptions);
 
 
 // create a rolling file logger based on date/time that fires process events
@@ -130,7 +131,7 @@ module.exports = function (app) {
                                 console.log(error)
 
                                 //update appointment with error
-                                result = connection.query("update clients set processed ='1', date_processed ='"+DATE_TODAY+"'send_log='" +error +"' where id="+result.id+" ")
+                                result = connection.query("update clients set date_processed ='"+DATE_TODAY+"'send_log='" +error +"' where id="+result.id+" ")
 
                             })
                             
@@ -157,7 +158,7 @@ module.exports = function (app) {
                                 console.log(error)
 
                                 //update appointment with error
-                                result = connection.query("update appointments set processed ='1', date_processed ='"+DATE_TODAY+"', send_log='" +error +"' where id="+result.id+" ")
+                                result = connection.query("update appointments set date_processed ='"+DATE_TODAY+"', send_log='" +error +"' where id="+result.id+" ")
 
                             })
                             
@@ -210,83 +211,86 @@ module.exports = function (app) {
 
         //if offline push data from request to local db
         var hl7_message = {
-            "MESSAGE_HEADER": {
-              "SENDING_APPLICATION": "KENYAEMR",
-              "SENDING_FACILITY": "11239",
-              "RECEIVING_APPLICATION": "IL",
-              "RECEIVING_FACILITY": "11239",
-              "MESSAGE_DATETIME": "20210414011559",
-              "SECURITY": "",
-              "MESSAGE_TYPE": "SIU^S12",
-              "PROCESSING_ID": "P"
+            "MESSAGE_HEADER":{
+            "SENDING_APPLICATION":"KENYAEMR",
+            "SENDING_FACILITY":"11239",
+            "RECEIVING_APPLICATION":"IL",
+            "RECEIVING_FACILITY":"11239",
+            "MESSAGE_DATETIME":"20210415070959",
+            "SECURITY":"",
+            "MESSAGE_TYPE":"ADT^A04",
+            "PROCESSING_ID":"P"
             },
-            "PATIENT_IDENTIFICATION": {
-              "EXTERNAL_PATIENT_ID": {
-                "ID": "",
-                "IDENTIFIER_TYPE": "GODS_NUMBER",
-                "ASSIGNING_AUTHORITY": "MPI"
-              },
-              "INTERNAL_PATIENT_ID": [
-                {
-                  "ID": "98761",
-                  "IDENTIFIER_TYPE": "PATIENT_CLINIC_NUMBER",
-                  "ASSIGNING_AUTHORITY": "CCC"
-                },
-                {
-                  "ID": "1123998761",
-                  "IDENTIFIER_TYPE": "CCC_NUMBER",
-                  "ASSIGNING_AUTHORITY": "CCC"
-                }
-              ],
-              "PATIENT_NAME": {
-                "FIRST_NAME": "ORINA",
-                "MIDDLE_NAME": "OMARIBA",
-                "LAST_NAME": "STEVEN"
-              },
-              "MOTHER_NAME": {
-                "FIRST_NAME": "",
-                "MIDDLE_NAME": "",
-                "LAST_NAME": ""
-              },
-              "DATE_OF_BIRTH": "",
-              "SEX": "",
-              "PATIENT_ADDRESS": {
-                "PHYSICAL_ADDRESS": {
-                  "VILLAGE": "",
-                  "WARD": "",
-                  "SUB_COUNTY": "",
-                  "COUNTY": "",
-                  "GPS_LOCATION": "",
-                  "NEAREST_LANDMARK": ""
-                },
-                "POSTAL_ADDRESS": ""
-              },
-              "PHONE_NUMBER": "",
-              "MARITAL_STATUS": "",
-              "DEATH_DATE": "",
-              "DEATH_INDICATOR": "",
-              "DATE_OF_BIRTH_PRECISION": ""
+            "PATIENT_IDENTIFICATION":{
+            "EXTERNAL_PATIENT_ID":{
+            "ID":"",
+            "IDENTIFIER_TYPE":"GODS_NUMBER",
+            "ASSIGNING_AUTHORITY":"MPI"
             },
-            "APPOINTMENT_INFORMATION": [
-              {
-                "APPOINTMENT_REASON": "FOLLOWUP",
-                "ACTION_CODE": "A",
-                "APPOINTMENT_PLACING_ENTITY": "KENYAEMR",
-                "APPOINTMENT_STATUS": "PENDING",
-                "APPOINTMENT_TYPE": "CLINICAL",
-                "APPOINTMENT_NOTE": "N/A",
-                "APPOINTMENT_DATE": "20210424",
-                "VISIT_DATE": "20210412",
-                "PLACER_APPOINTMENT_NUMBER": {
-                  "ENTITY": "KENYAEMR",
-                  "NUMBER": "34256"
-                }
-              }
-            ]
-          }
-
-        var connection = mysql.createConnection(config_local.localDatabaseOptions);
-
+        "INTERNAL_PATIENT_ID":[
+            {
+            "ID":"556677",
+            "IDENTIFIER_TYPE":"PATIENT_CLINIC_NUMBER",
+            "ASSIGNING_AUTHORITY":"CCC"
+            },
+            {
+            "ID":"6677338871",
+            "IDENTIFIER_TYPE":"CCC_NUMBER",
+            "ASSIGNING_AUTHORITY":"CCC"
+            }
+        ],
+        "PATIENT_NAME":{
+        "FIRST_NAME":"WAKUTEST",
+        "MIDDLE_NAME":"",
+        "LAST_NAME":"JAMAA"
+        },
+        "MOTHER_NAME":{
+        "FIRST_NAME":"",
+        "MIDDLE_NAME":"",
+        "LAST_NAME":""
+        },
+        "DATE_OF_BIRTH":"19770615",
+        "SEX":"M",
+        "PATIENT_ADDRESS":{
+        "PHYSICAL_ADDRESS":{
+        "VILLAGE":"",
+        "WARD":"",
+        "SUB_COUNTY":"NTUNENE",
+        "COUNTY":"MERU",
+        "GPS_LOCATION":"",
+        "NEAREST_LANDMARK":""
+        },
+        "POSTAL_ADDRESS":""
+        },
+        "PHONE_NUMBER":"",
+        "MARITAL_STATUS":"",
+        "DEATH_DATE":"",
+        "DEATH_INDICATOR":"",
+        "DATE_OF_BIRTH_PRECISION":"ESTIMATED"
+        },
+        "NEXT_OF_KIN":[
+            {
+            "NOK_NAME":{
+            "FIRST_NAME":"",
+            "MIDDLE_NAME":"",
+            "LAST_NAME":""
+            },
+            "RELATIONSHIP":"",
+            "ADDRESS":"",
+            "PHONE_NUMBER":"",
+            "SEX":"",
+            "DATE_OF_BIRTH":"",
+            "CONTACT_ROLE":""
+            }
+        ],
+        "PATIENT_VISIT":{
+        "VISIT_DATE":"20210415",
+        "PATIENT_SOURCE":"OUTPATIENT",
+        "HIV_CARE_ENROLLMENT_DATE":"20210415",
+        "PATIENT_TYPE":""
+        },
+        }
+        
         var DATE_TODAY = moment(new Date()).format("YYYY-MM-DD");
 
         var message_type = hl7_message.MESSAGE_HEADER.MESSAGE_TYPE;
@@ -299,6 +303,7 @@ module.exports = function (app) {
 
                 var GODS_NUMBER = hl7_message.PATIENT_IDENTIFICATION.EXTERNAL_PATIENT_ID.ID;
                 var CCC_NUMBER;
+                var PATIENT_CLINIC_NUMBER;
                 var SENDING_FACILITY = hl7_message.MESSAGE_HEADER.SENDING_FACILITY;
                 var FIRST_NAME = hl7_message.PATIENT_IDENTIFICATION.PATIENT_NAME.FIRST_NAME;
                 var MIDDLE_NAME = hl7_message.PATIENT_IDENTIFICATION.PATIENT_NAME.MIDDLE_NAME;
@@ -379,6 +384,12 @@ module.exports = function (app) {
                             CCC_NUMBER = result[i].value;
                         }
                     }
+
+                    if (key == "ID") {
+                        if (result[i + 1].value == "PATIENT_CLINIC_NUMBER") {
+                            PATIENT_CLINIC_NUMBER = result[i].value;
+                        }
+                    }
                 }
 
                 var enroll_year = ENROLLMENT_DATE.substring(0, 4);
@@ -386,10 +397,16 @@ module.exports = function (app) {
                 var enroll_day = ENROLLMENT_DATE.substring(6, 8);
                 var new_enroll_date = enroll_year + "-" + enroll_month + "-" + enroll_day;
 
-                var death_year = DEATH_DATE.substring(0, 4);
-                var death_month = DEATH_DATE.substring(4, 6);
-                var death_day = DEATH_DATE.substring(6, 8);
-                var new_death_date = death_year + "-" + death_month + "-" + death_day;
+                if(DEATH_DATE === "") {
+                    var new_death_date = null;
+                } else {
+
+                    var death_year = DEATH_DATE.substring(0, 4);
+                    var death_month = DEATH_DATE.substring(4, 6);
+                    var death_day = DEATH_DATE.substring(6, 8);
+                    var new_death_date = death_year + "-" + death_month + "-" + death_day;
+
+                }
 
                 if (CCC_NUMBER.length != 10 || isNaN(CCC_NUMBER)) {
                     response = `Invalid CCC Number: ${CCC_NUMBER}`;
@@ -403,7 +420,7 @@ module.exports = function (app) {
                     DEATH_INDICATOR = "Active";
                 }
 
-                connection.connect(function(err, connection) {
+                connection.connect(function(err) {
                     if (err) {
                         console.log(err);
                         return;
@@ -411,13 +428,16 @@ module.exports = function (app) {
 
                         var PROCESSED = 0;
 
-                        var gateway_sql =
-                            "Insert into clients (f_name,m_name,l_name,dob,clinic_number,mfl_code,gender,marital,phone_no,GODS_NUMBER,group_id, SENDING_APPLICATION, PATIENT_SOURCE, db_source, enrollment_date, client_type, locator_county, locator_sub_county, locator_ward, locator_village, message_type, death_date, death_indicator, processed) VALUES ('" +
+                        if(new_death_date === null) {
+
+                            var gateway_sql =
+                            "Insert into clients (f_name,m_name,l_name,dob,clinic_number,patient_clinic_number,mfl_code,gender,marital,phone_no,GODS_NUMBER,group_id, SENDING_APPLICATION, PATIENT_SOURCE, db_source, enrollment_date, client_type, locator_county, locator_sub_county, locator_ward, locator_village, message_type, date_deceased, death_status, processed) VALUES ('" +
                             FIRST_NAME +
                             "', '" +MIDDLE_NAME +
                             "','" +LAST_NAME +
                             "','" +new_date +
                             "','" +CCC_NUMBER +
+                            "','" +PATIENT_CLINIC_NUMBER +
                             "','" +SENDING_FACILITY +
                             "','" +SEX +
                             "','" +MARITAL_STATUS +
@@ -433,11 +453,47 @@ module.exports = function (app) {
                             "','" +SUB_COUNTY +
                             "','" +WARD +
                             "','" +VILLAGE +
-                            "','" +new_death_date + 
-                            "','" +DEATH_INDICATOR + 
                             "','" +message_type +
+                            "'," +new_death_date + 
+                            ",'" +DEATH_INDICATOR + 
                             "','" +PROCESSED +
                             "' )";
+
+                        } else {
+
+                            var gateway_sql =
+                            "Insert into clients (f_name,m_name,l_name,dob,clinic_number,patient_clinic_number,mfl_code,gender,marital,phone_no,GODS_NUMBER,group_id, SENDING_APPLICATION, PATIENT_SOURCE, db_source, enrollment_date, client_type, locator_county, locator_sub_county, locator_ward, locator_village, message_type, date_deceased, death_status, processed) VALUES ('" +
+                            FIRST_NAME +
+                            "', '" +MIDDLE_NAME +
+                            "','" +LAST_NAME +
+                            "','" +new_date +
+                            "','" +CCC_NUMBER +
+                            "','" +PATIENT_CLINIC_NUMBER +
+                            "','" +SENDING_FACILITY +
+                            "','" +SEX +
+                            "','" +MARITAL_STATUS +
+                            "','" +PHONE_NUMBER +
+                            "','" +GODS_NUMBER +
+                            "','" +parseInt(GROUP_ID) +
+                            "','" +SENDING_APPLICATION +
+                            "','" +PATIENT_SOURCE +
+                            "','" +SENDING_APPLICATION +
+                            "','" +new_enroll_date +
+                            "','" +PATIENT_TYPE +
+                            "','" +COUNTY +
+                            "','" +SUB_COUNTY +
+                            "','" +WARD +
+                            "','" +VILLAGE +
+                            "','" +message_type +
+                            "','" +new_death_date + 
+                            "','" +DEATH_INDICATOR + 
+                            "','" +PROCESSED +
+                            "' )";
+
+
+                        }
+
+                        
     
                         // Use the connection
                         connection.query(gateway_sql, function(error, results, fields) {
@@ -449,7 +505,6 @@ module.exports = function (app) {
                             } else {
     
                                 console.log(results);
-                                connection.release();
     
                             }
                             // Don't use the connection here, it has been returned to the pool.
@@ -532,7 +587,7 @@ module.exports = function (app) {
                     APPOINTMENT_TYPE = 1;
                 }
 
-                connection.connect(function(err) {
+                connection.connect(function(err, connection) {
                     if (err){
 
                         console.log(err);
@@ -552,9 +607,10 @@ module.exports = function (app) {
                         var PROCESSED = 0;
                         
                         var appointment_sql =
-                        "Insert into appointments (appntmnt_date,app_type_1,APPOINTMENT_REASON,app_status,db_source,active_app,APPOINTMENT_LOCATION,reason, placer_appointment_number, created_at, processed) VALUES ('" +
+                        "Insert into appointments (appntmnt_date,app_type_1,message_type,APPOINTMENT_REASON,app_status,db_source,active_app,APPOINTMENT_LOCATION,reason, placer_appointment_number, created_at, processed) VALUES ('" +
                         APPOINTMENT_DATE +
                         "','" +APPOINTMENT_TYPE +
+                        "','" +message_type +
                         "','" +APPOINTMENT_REASON +
                         "','" +APP_STATUS +
                         "','" +SENDING_APPLICATION +
@@ -599,6 +655,7 @@ module.exports = function (app) {
                 var SENDING_FACILITY = jsonObj.MESSAGE_HEADER.SENDING_FACILITY;
                 var OBSERVATION_VALUE;
                 var OBSERVATION_DATETIME;
+                var MESSAGE_TYPE = jsonObj.MESSAGE_HEADER.MESSAGE_TYPE;
 
                 var result = get_json(hl7_message);
 
@@ -649,7 +706,6 @@ module.exports = function (app) {
                             "','" +SENDING_APPLICATION +
                             "','" +OBSERVATION_VALUE +
                             "','" +OBSERVATION_DATETIME +
-                            "','" +OBSERVATION_RESULT_STATUS +
                             "' )";
 
                         // Use the connection

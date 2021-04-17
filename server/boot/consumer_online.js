@@ -211,106 +211,79 @@ module.exports = function (app) {
 
         //if offline push data from request to local db
         var hl7_message = {
-            "MESSAGE_HEADER":{
-            "SENDING_APPLICATION":"KENYAEMR",
-            "SENDING_FACILITY":"11239",
-            "RECEIVING_APPLICATION":"IL",
-            "RECEIVING_FACILITY":"11239",
-            "MESSAGE_DATETIME":"20210416103459",
-            "SECURITY":"",
-            "MESSAGE_TYPE":"ADT^A08",
-            "PROCESSING_ID":"P"
+            "MESSAGE_HEADER": {
+              "SENDING_APPLICATION": "KENYAEMR",
+              "SENDING_FACILITY": "11239",
+              "RECEIVING_APPLICATION": "IL",
+              "RECEIVING_FACILITY": "11239",
+              "MESSAGE_DATETIME": "20210415090254",
+              "SECURITY": "",
+              "MESSAGE_TYPE": "ORU^R01",
+              "PROCESSING_ID": "P"
             },
-            "PATIENT_IDENTIFICATION":{
-                "EXTERNAL_PATIENT_ID":{
-                "ID":"",
-                "IDENTIFIER_TYPE":"GODS_NUMBER",
-                "ASSIGNING_AUTHORITY":"MPI"
-                },
-                "INTERNAL_PATIENT_ID":[
+            "PATIENT_IDENTIFICATION": {
+              "EXTERNAL_PATIENT_ID": {
+                "ID": "",
+                "IDENTIFIER_TYPE": "GODS_NUMBER",
+                "ASSIGNING_AUTHORITY": "MPI"
+              },
+              "INTERNAL_PATIENT_ID": [
                 {
-                "ID":"1123900341",
-                "IDENTIFIER_TYPE":"CCC_NUMBER",
-                "ASSIGNING_AUTHORITY":"CCC"
+                  "ID": "98761",
+                  "IDENTIFIER_TYPE": "PATIENT_CLINIC_NUMBER",
+                  "ASSIGNING_AUTHORITY": "CCC"
+                },
+                {
+                  "ID": "1123998761",
+                  "IDENTIFIER_TYPE": "CCC_NUMBER",
+                  "ASSIGNING_AUTHORITY": "CCC"
                 }
-                ],
-            "PATIENT_NAME":{
-            "FIRST_NAME":"LUCY",
-            "MIDDLE_NAME":"TEST",
-            "LAST_NAME":"NYOKABI"
+              ],
+              "PATIENT_NAME": {
+                "FIRST_NAME": "ORINA",
+                "MIDDLE_NAME": "OMARIBA",
+                "LAST_NAME": "STEVEN"
+              },
+              "MOTHER_NAME": {
+                "FIRST_NAME": "",
+                "MIDDLE_NAME": "",
+                "LAST_NAME": ""
+              },
+              "DATE_OF_BIRTH": "",
+              "SEX": "",
+              "PATIENT_ADDRESS": {
+                "PHYSICAL_ADDRESS": {
+                  "VILLAGE": "",
+                  "WARD": "",
+                  "SUB_COUNTY": "",
+                  "COUNTY": "",
+                  "GPS_LOCATION": "",
+                  "NEAREST_LANDMARK": ""
+                },
+                "POSTAL_ADDRESS": ""
+              },
+              "PHONE_NUMBER": "",
+              "MARITAL_STATUS": "",
+              "DEATH_DATE": "",
+              "DEATH_INDICATOR": "",
+              "DATE_OF_BIRTH_PRECISION": ""
             },
-            "MOTHER_NAME":{
-            "FIRST_NAME":"",
-            "MIDDLE_NAME":"",
-            "LAST_NAME":""
-            },
-            "DATE_OF_BIRTH":"19880615",
-            "SEX":"F",
-            "PATIENT_ADDRESS":{
-            "PHYSICAL_ADDRESS":{
-            "VILLAGE":"",
-            "WARD":"",
-            "SUB_COUNTY":"SIGOMERE",
-            "COUNTY":"SIAYA",
-            "GPS_LOCATION":"",
-            "NEAREST_LANDMARK":""
-            },
-            "POSTAL_ADDRESS":""
-            },
-            "PHONE_NUMBER":"0734678900",
-            "MARITAL_STATUS":"",
-            "DEATH_DATE":"",
-            "DEATH_INDICATOR":"",
-            "DATE_OF_BIRTH_PRECISION":"ESTIMATED"
-            },
-            "NEXT_OF_KIN":[
-            {
-            "NOK_NAME":{
-            "FIRST_NAME":"",
-            "MIDDLE_NAME":"",
-            "LAST_NAME":""
-            },
-            "RELATIONSHIP":"",
-            "ADDRESS":"",
-            "PHONE_NUMBER":"",
-            "SEX":"",
-            "DATE_OF_BIRTH":"",
-            "CONTACT_ROLE":""
-            }
-            ],
-            "PATIENT_VISIT":{
-            "VISIT_DATE":"20210416",
-            "PATIENT_SOURCE":"VCT",
-            "HIV_CARE_ENROLLMENT_DATE":"20210416",
-            "PATIENT_TYPE":""
-            },
-            "OBSERVATION_RESULT":[
-            {
-            "UNITS":"",
-            "VALUE_TYPE":"NM",
-            "OBSERVATION_VALUE":"1",
-            "OBSERVATION_DATETIME":"20210416",
-            "CODING_SYSTEM":"",
-            "ABNORMAL_FLAGS":"N",
-            "OBSERVATION_RESULT_STATUS":"F",
-            "SET_ID":"",
-            "OBSERVATION_IDENTIFIER":"WHO_STAGE"
-            },
-            {
-            "UNITS":"",
-            "VALUE_TYPE":"CE",
-            "OBSERVATION_VALUE":"AF1A",
-            "OBSERVATION_DATETIME":"20210416",
-            "CODING_SYSTEM":"NASCOP_CODES",
-            "ABNORMAL_FLAGS":"N",
-            "OBSERVATION_RESULT_STATUS":"F",
-            "SET_ID":"",
-            "OBSERVATION_IDENTIFIER":"CURRENT_REGIMEN"
-            }
+            "OBSERVATION_RESULT": [
+              {
+                "UNITS": "",
+                "VALUE_TYPE": "CE",
+                "OBSERVATION_VALUE": "LOST_TO_FOLLOWUP",
+                "OBSERVATION_DATETIME": "20210415090210",
+                "CODING_SYSTEM": "",
+                "ABNORMAL_FLAGS": "N",
+                "OBSERVATION_RESULT_STATUS": "F",
+                "SET_ID": "",
+                "OBSERVATION_IDENTIFIER": "HIV_DISCONTINUATION_REASON"
+              }
             ]
-            }
+          }  
         
-        
+         
         var DATE_TODAY = moment(new Date()).format("YYYY-MM-DD");
 
         var message_type = hl7_message.MESSAGE_HEADER.MESSAGE_TYPE;
@@ -319,7 +292,451 @@ module.exports = function (app) {
 
         if (SENDING_APPLICATION === 'KENYAEMR' || SENDING_APPLICATION === 'ADT') {
 
-            if (message_type == "ADT^A04" || message_type == "ADT^A08") {
+            if (message_type == "ADT^A04") {
+
+                var GODS_NUMBER = hl7_message.PATIENT_IDENTIFICATION.EXTERNAL_PATIENT_ID.ID;
+                var CCC_NUMBER;
+                var PATIENT_CLINIC_NUMBER;
+                var SENDING_FACILITY = hl7_message.MESSAGE_HEADER.SENDING_FACILITY;
+                var FIRST_NAME = hl7_message.PATIENT_IDENTIFICATION.PATIENT_NAME.FIRST_NAME;
+                var MIDDLE_NAME = hl7_message.PATIENT_IDENTIFICATION.PATIENT_NAME.MIDDLE_NAME;
+                var LAST_NAME = hl7_message.PATIENT_IDENTIFICATION.PATIENT_NAME.LAST_NAME;
+                var DATE_OF_BIRTH = hl7_message.PATIENT_IDENTIFICATION.DATE_OF_BIRTH;
+                var SEX;
+                var PHONE_NUMBER;
+                var MARITAL_STATUS;
+                var PATIENT_SOURCE = hl7_message.PATIENT_VISIT.PATIENT_SOURCE;
+                var ENROLLMENT_DATE = hl7_message.PATIENT_VISIT.HIV_CARE_ENROLLMENT_DATE;
+                var PATIENT_TYPE = hl7_message.PATIENT_VISIT.PATIENT_TYPE;
+                var GROUP_ID;
+                var COUNTY = hl7_message.PATIENT_IDENTIFICATION.PATIENT_ADDRESS.PHYSICAL_ADDRESS.COUNTY;
+                var SUB_COUNTY = hl7_message.PATIENT_IDENTIFICATION.PATIENT_ADDRESS.PHYSICAL_ADDRESS.SUB_COUNTY;
+                var WARD = hl7_message.PATIENT_IDENTIFICATION.PATIENT_ADDRESS.PHYSICAL_ADDRESS.WARD;
+                var VILLAGE = hl7_message.PATIENT_IDENTIFICATION.PATIENT_ADDRESS.PHYSICAL_ADDRESS.VILLAGE;
+                var ART_DATE;
+
+                var result = get_json(hl7_message);
+
+                console.log(result);
+
+                for (var i = 0; i < result.length; i++) {
+                    var key = result[i].key;
+                    var value = result[i].value;
+
+                    if (key == "DATE_OF_BIRTH") {
+                        var DoB = DATE_OF_BIRTH;
+    
+                        var year = DoB.substring(0, 4);
+                        var month = DoB.substring(4, 6);
+                        var day = DoB.substring(6, 8);
+    
+                        var today = DATE_TODAY;
+    
+                        var new_date = year + "-" + month + "-" + day;
+                        var date_diff = moment(today).diff(
+                            moment(new_date).format("YYYY-MM-DD"),
+                            "days"
+                        );
+    
+                        if (date_diff >= 5475 && date_diff <= 6935) {
+                            GROUP_ID = "2";
+                        }
+                        if (date_diff >= 7300) {
+                            GROUP_ID = "1";
+                        }
+                        if (date_diff <= 5110) {
+                            GROUP_ID = "6";
+                        }
+                    } else if (key == "SEX") {
+                        if (result[i].value == "F") {
+                            SEX = "1";
+                        } else {
+                            SEX = "2";
+                        }
+                    } else if (key == "PHONE_NUMBER") {
+                        PHONE_NUMBER = result[i].value;
+                    } else if (key == "MARITAL_STATUS") {
+                        if (result[i].value === "") {
+                            MARITAL_STATUS = "1";
+                        }
+                        if (result[i].value == "D") {
+                            MARITAL_STATUS = "3";
+                        } else if (result[i].value == "M") {
+                            MARITAL_STATUS = "2";
+                        } else if (result[i].value == "S") {
+                            MARITAL_STATUS = "1";
+                        } else if (result[i].value == "W") {
+                            MARITAL_STATUS = "4";
+                        } else if (result[i].value == "C") {
+                            MARITAL_STATUS = "5";
+                        }
+                    }
+                    if (key == "ID") {
+                        if (result[i + 1].value == "CCC_NUMBER") {
+                            CCC_NUMBER = result[i].value;
+                        }
+                    }
+
+                    if (key == "ID") {
+                        if (result[i + 1].value == "PATIENT_CLINIC_NUMBER") {
+                            PATIENT_CLINIC_NUMBER = result[i].value;
+                        }
+                    }
+
+                    if(key == "OBSERVATION_DATETIME") {
+                        if (result[i + 5].value == "CURRENT_REGIMEN") {
+                            ART_DATE = result[i].value;
+                        }
+                    }
+                }
+
+                var enroll_year = ENROLLMENT_DATE.substring(0, 4);
+                var enroll_month = ENROLLMENT_DATE.substring(4, 6);
+                var enroll_day = ENROLLMENT_DATE.substring(6, 8);
+                var new_enroll_date = enroll_year + "-" + enroll_month + "-" + enroll_day;
+
+                if(ART_DATE == "" || ART_DATE == undefined ) {
+
+                    var new_art_date = '0000:00:00';
+
+                } else {
+
+                    var art_year = ART_DATE.substring(0, 4);
+                    var art_month = ART_DATE.substring(4, 6);
+                    var art_day = ART_DATE.substring(6, 8);
+                    var new_art_date = art_year + "-" + art_month + "-" + art_day;
+
+                }
+
+                if (CCC_NUMBER.length != 10 || isNaN(CCC_NUMBER)) {
+                    response = `Invalid CCC Number: ${CCC_NUMBER}`;
+                    console.log(response);
+                    return;
+                }
+
+                connection.connect(function(err) {
+                    if (err) {
+                        console.log(err);
+                        return;
+                    } else {
+
+                        var PROCESSED = 0;
+
+                            var gateway_sql =
+                            "Insert into clients (f_name,m_name,l_name,dob,clinic_number,patient_clinic_number,mfl_code,gender,marital,phone_no,GODS_NUMBER,group_id, SENDING_APPLICATION, PATIENT_SOURCE, db_source, enrollment_date, art_date, client_type, locator_county, locator_sub_county, locator_ward, locator_village, message_type, processed) VALUES ('" +
+                            FIRST_NAME +
+                            "', '" +MIDDLE_NAME +
+                            "','" +LAST_NAME +
+                            "','" +new_date +
+                            "','" +CCC_NUMBER +
+                            "','" +PATIENT_CLINIC_NUMBER +
+                            "','" +SENDING_FACILITY +
+                            "','" +SEX +
+                            "','" +MARITAL_STATUS +
+                            "','" +PHONE_NUMBER +
+                            "','" +GODS_NUMBER +
+                            "','" +parseInt(GROUP_ID) +
+                            "','" +SENDING_APPLICATION +
+                            "','" +PATIENT_SOURCE +
+                            "','" +SENDING_APPLICATION +
+                            "','" +new_enroll_date +
+                            "','" +new_art_date +
+                            "','" +PATIENT_TYPE +
+                            "','" +COUNTY +
+                            "','" +SUB_COUNTY +
+                            "','" +WARD +
+                            "','" +VILLAGE +
+                            "','" +message_type +  
+                            "','" +PROCESSED +
+                            "' )";
+
+
+                        // Use the connection
+                        connection.query(gateway_sql, function(error, results, fields) {
+                            // And done with the connection.
+                            if (error) {
+    
+                                console.log(error);
+    
+                            } else {
+    
+                                console.log(results);
+    
+                            }
+                            // Don't use the connection here, it has been returned to the pool.
+                        });
+
+                    }
+                });
+
+            } else if (message_type == "SIU^S12") {
+                var GODS_NUMBER = hl7_message.PATIENT_IDENTIFICATION.EXTERNAL_PATIENT_ID.ID;
+                var SENDING_FACILITY;
+    
+                var CCC_NUMBER;
+                var APPOINTMENT_REASON;
+                var APPOINTMENT_TYPE;
+                var APPOINTMENT_DATE;
+                var APPOINTMENT_PLACING_ENTITY;
+                var PLACER_APPOINTMENT_NUMBER;
+                var APPOINTMENT_LOCATION;
+                //var ACTION_CODE;
+                var APPOINTMENT_NOTE;
+                var APPOINTMENT_HONORED;
+                var VISIT_DATE;
+    
+                var result = get_json(hl7_message);
+    
+                for (var i = 0; i < result.length; i++) {
+                    var key = result[i].key;
+                    var key_value = result[i].value;
+    
+                    if (key == "NUMBER") {
+                        PLACER_APPOINTMENT_NUMBER = result[i].value;
+                    } else if (key == "GODS_NUMBER") {
+                        GODS_NUMBER = result[i].value;
+                    } else if (key == "APPOINTMENT_REASON") {
+                        APPOINTMENT_REASON = result[i].value;
+                    } else if (key == "APPOINTMENT_TYPE") {
+                        APPOINTMENT_TYPE = result[i].value;
+                    } else if (key == "VISIT_DATE") {
+                        VISIT_DATE = result[i].value;
+                    } else if (key == "APPOINTMENT_LOCATION") {
+                        APPOINTMENT_LOCATION = result[i].value;
+                    } else if (key == "APPINTMENT_HONORED") {
+                        APPOINTMENT_HONORED = result[i].value;
+                    } else if (key == "APPOINTMENT_NOTE") {
+                        APPOINTMENT_NOTE = result[i].value;
+                    } else if (key == "ACTION_CODE") {
+                        ACTION_CODE = result[i].value;
+                    } else if (key == "APPOINTMENT_PLACING_ENTITY") {
+                        APPOINTMENT_PLACING_ENTITY = result[i].value;
+                    } else if (key == "APPOINTMENT_DATE") {
+                        APPOINTMENT_DATE = result[i].value;
+                        APPOINTMENT_DATE = APPOINTMENT_DATE;
+    
+                        var year = APPOINTMENT_DATE.substring(0, 4);
+                        var month = APPOINTMENT_DATE.substring(4, 6);
+                        var day = APPOINTMENT_DATE.substring(6, 8);
+    
+                        var app_date = year + "-" + month + "-" + day;
+    
+                        var current_date = moment(new Date());
+                        var today = current_date.format("YYYY-MM-DD");
+    
+                        var BirthDate = moment(app_date);
+                        APPOINTMENT_DATE = BirthDate.format("YYYY-MM-DD");
+                    }
+                    
+                    if (key == "ID") {
+                        if (result[i + 1].value == "CCC_NUMBER") {
+                            CCC_NUMBER = result[i].value;
+                        }
+                    }
+                }
+    
+                if (CCC_NUMBER.length != 10 || isNaN(CCC_NUMBER)) {
+                    console.log("Invalid CCC NUMBER");
+                }
+    
+                if (!APPOINTMENT_TYPE) {
+                    APPOINTMENT_TYPE = 1;
+                }
+
+                connection.connect(function(err) {
+                    if (err){
+
+                        console.log(err);
+
+                    } else {        
+    
+                        if (APPOINTMENT_LOCATION == "PHARMACY" || APPOINTMENT_REASON == "REGIMEN REFILL") {
+                            APPOINTMENT_TYPE = 1;
+                        } else {
+                            APPOINTMENT_TYPE = 2;
+                        }
+
+                        var APP_STATUS = "Booked";
+                        var ACTIVE_APP = "1";
+                        var SENDING_APPLICATION = hl7_message.MESSAGE_HEADER.SENDING_APPLICATION;
+                        var SENDING_FACILITY = hl7_message.MESSAGE_HEADER.SENDING_FACILITY;
+                        var PROCESSED = 0;
+                        
+                        var appointment_sql =
+                        "Insert into appointments (appntmnt_date,app_type_1,clinic_number,message_type,APPOINTMENT_REASON,app_status,db_source,active_app,APPOINTMENT_LOCATION,reason, placer_appointment_number, created_at, processed) VALUES ('" +
+                        APPOINTMENT_DATE +
+                        "','" +APPOINTMENT_TYPE +
+                        "','" +CCC_NUMBER +
+                        "','" +message_type +
+                        "','" +APPOINTMENT_REASON +
+                        "','" +APP_STATUS +
+                        "','" +SENDING_APPLICATION +
+                        "','" +ACTIVE_APP +
+                        "','" +APPOINTMENT_LOCATION +
+                        "','" +APPOINTMENT_NOTE +
+                        "','" +PLACER_APPOINTMENT_NUMBER +
+                        "','" +VISIT_DATE +
+                        "','" +PROCESSED +
+                        "')";
+                        // Use the connection
+                        console.log(appointment_sql);
+                        connection.query(appointment_sql, function(
+                            error,
+                            results,
+                            fields
+                        ) {
+                            if (error) {
+                                console.log(error);
+                            } else {
+                                console.log(results);
+                            }
+                            // And done with the connection.
+                           // connection.end();
+
+                            // Don't use the connection here, it has been returned to the pool.
+                        });
+
+                        
+                    } 
+
+                });	
+                
+            } else if(message_type === "ORU^R01") {
+
+                var GODS_NUMBER = hl7_message.PATIENT_IDENTIFICATION.EXTERNAL_PATIENT_ID.ID;
+                var CCC_NUMBER;
+                var FIRST_NAME = hl7_message.PATIENT_IDENTIFICATION.PATIENT_NAME.FIRST_NAME;
+                var MIDDLE_NAME = hl7_message.PATIENT_IDENTIFICATION.PATIENT_NAME.MIDDLE_NAME;
+                var LAST_NAME = hl7_message.PATIENT_IDENTIFICATION.PATIENT_NAME.LAST_NAME;
+                var SENDING_APPLICATION = hl7_message.MESSAGE_HEADER.SENDING_APPLICATION;
+                var SENDING_FACILITY = hl7_message.MESSAGE_HEADER.SENDING_FACILITY;
+                var OBSERVATION_VALUE;
+                var OBSERVATION_DATETIME;
+                var MESSAGE_TYPE = hl7_message.MESSAGE_HEADER.MESSAGE_TYPE;
+                var DEATH_DATE;
+                var DEATH_INDICATOR;
+
+                var result = get_json(hl7_message);
+
+                for (var i = 0; i < result.length; i++) {
+                    var key = result[i].key;                
+                    var value = result[i].value;
+
+                    if (key == "DEATH_DATE") {
+                        DEATH_DATE = result[i].value;
+                    } else if (key == "DEATH_INDICATOR") {
+                        DEATH_INDICATOR = result[i].value;
+                    }
+                        
+                    if (key == "ID") {
+                        if (result[i + 1].value == "CCC_NUMBER") {
+                            CCC_NUMBER = result[i].value;
+                        }
+                    } else if(key == "OBSERVATION_VALUE") {
+                        if (result[i + 6].value == "HIV_DISCONTINUATION_REASON") {
+                            OBSERVATION_VALUE = result[i].value;
+                        }
+                    } else if(key == "OBSERVATION_DATETIME") {
+                        if (result[i + 5].value == "HIV_DISCONTINUATION_REASON") {
+                            OBSERVATION_DATETIME = result[i].value;
+                        }
+                    }
+            
+                }      
+
+                if (CCC_NUMBER.length != 10 || isNaN(CCC_NUMBER)) {
+                    response = `Invalid CCC Number: ${CCC_NUMBER}`;
+                    console.log(response);
+                    return;
+                }
+
+                if(DEATH_DATE == "" || DEATH_DATE == undefined ) {
+
+                    var new_death_date = '0000:00:00';
+
+                } else {
+
+                    var death_year = DEATH_DATE.substring(0, 4);
+                    var death_month = DEATH_DATE.substring(4, 6);
+                    var death_day = DEATH_DATE.substring(6, 8);
+                    var new_death_date = death_year + "-" + death_month + "-" + death_day;
+
+                }
+
+                if(DEATH_INDICATOR === "TRUE") {
+                    var death_ind = "Deceased"
+                } else {
+                    var death_ind = "Active"
+                }
+
+                var observation_year = OBSERVATION_DATETIME.substring(0, 4);
+                var observation_month = OBSERVATION_DATETIME.substring(4, 6);
+                var observation_day = OBSERVATION_DATETIME.substring(6, 8);
+                var observation_hour = OBSERVATION_DATETIME.substring(8, 10);
+                var observation_minute = OBSERVATION_DATETIME.substring(10, 12);
+                var observation_second = OBSERVATION_DATETIME.substring(12, 14);
+                var new_observation_date = observation_year + "-" + observation_month + "-" + observation_day + " " + observation_hour + ":" + observation_minute + ":" + observation_second;
+
+                connection.connect(function(err) {
+                    if (err) {
+                        console.log(err);
+                        return;
+                    } else {
+
+                        if(new_death_date !== "") {
+
+                            var gateway_sql =
+
+                            "Insert into clients_oru(f_name,m_name,l_name,clinic_number, message_type, mfl_code, SENDING_APPLICATION, date_deceased, death_status) VALUES('" + 
+                            FIRST_NAME +
+                            "','" +MIDDLE_NAME +
+                            "','" +LAST_NAME +
+                            "','" +CCC_NUMBER +
+                            "','" +MESSAGE_TYPE +
+                            "','" +SENDING_FACILITY +
+                            "','" +SENDING_APPLICATION +
+                            "','" +new_death_date +
+                            "','" +death_ind +
+                            "' )";
+
+                        } else {
+
+                            var gateway_sql =
+
+                            "Insert into clients_oru(f_name,m_name,l_name,clinic_number, message_type, mfl_code, SENDING_APPLICATION, observation_value,observation_datetime) VALUES('" + 
+                            FIRST_NAME +
+                            "','" +MIDDLE_NAME +
+                            "','" +LAST_NAME +
+                            "','" +CCC_NUMBER +
+                            "','" +MESSAGE_TYPE +
+                            "','" +SENDING_FACILITY +
+                            "','" +SENDING_APPLICATION +
+                            "','" +OBSERVATION_VALUE +
+                            "','" +OBSERVATION_DATETIME +
+                            "' )";
+
+                        }
+
+                        
+
+                        //Use the connection
+                        connection.query(gateway_sql, function(error, results, fields) {
+                            // And done with the connection.
+                            if (error) {
+    
+                                console.log(error);
+    
+                            } else {
+    
+                                console.log(results);    
+                            }
+                            // Don't use the connection here, it has been returned to the pool.
+                        });    
+                    }        
+
+                });
+
+            } else if(message_type == "ADT^A08") {
 
                 var GODS_NUMBER = hl7_message.PATIENT_IDENTIFICATION.EXTERNAL_PATIENT_ID.ID;
                 var CCC_NUMBER;
@@ -424,10 +841,18 @@ module.exports = function (app) {
                 var enroll_day = ENROLLMENT_DATE.substring(6, 8);
                 var new_enroll_date = enroll_year + "-" + enroll_month + "-" + enroll_day;
 
-                var art_year = ART_DATE.substring(0, 4);
-                var art_month = ART_DATE.substring(4, 6);
-                var art_day = ART_DATE.substring(6, 8);
-                var new_art_date = art_year + "-" + art_month + "-" + art_day;
+                if(ART_DATE == "" || ART_DATE == undefined ) {
+
+                    var new_art_date = null;
+
+                } else {
+
+                    var art_year = ART_DATE.substring(0, 4);
+                    var art_month = ART_DATE.substring(4, 6);
+                    var art_day = ART_DATE.substring(6, 8);
+                    var new_art_date = art_year + "-" + art_month + "-" + art_day;
+
+                }
 
                 if(DEATH_DATE === "") {
                     var new_death_date = null;
@@ -460,75 +885,45 @@ module.exports = function (app) {
 
                         var PROCESSED = 0;
 
-                        if(new_death_date === null) {
+                        if(new_art_date === null || new_death_date === null ) {
 
-                            var gateway_sql =
-                            "Insert into clients (f_name,m_name,l_name,dob,clinic_number,patient_clinic_number,mfl_code,gender,marital,phone_no,GODS_NUMBER,group_id, SENDING_APPLICATION, PATIENT_SOURCE, db_source, enrollment_date, art_date, client_type, locator_county, locator_sub_county, locator_ward, locator_village, message_type, date_deceased, death_status, processed) VALUES ('" +
-                            FIRST_NAME +
-                            "', '" +MIDDLE_NAME +
-                            "','" +LAST_NAME +
-                            "','" +new_date +
-                            "','" +CCC_NUMBER +
-                            "','" +PATIENT_CLINIC_NUMBER +
-                            "','" +SENDING_FACILITY +
-                            "','" +SEX +
-                            "','" +MARITAL_STATUS +
-                            "','" +PHONE_NUMBER +
-                            "','" +GODS_NUMBER +
-                            "','" +parseInt(GROUP_ID) +
-                            "','" +SENDING_APPLICATION +
-                            "','" +PATIENT_SOURCE +
-                            "','" +SENDING_APPLICATION +
-                            "','" +new_enroll_date +
-                            "','" +new_art_date +
-                            "','" +PATIENT_TYPE +
-                            "','" +COUNTY +
-                            "','" +SUB_COUNTY +
-                            "','" +WARD +
-                            "','" +VILLAGE +
-                            "','" +message_type +
-                            "'," +new_death_date + 
-                            ",'" +DEATH_INDICATOR + 
-                            "','" +PROCESSED +
-                            "' )";
+                            var update_sql =
+                            "update clients SET mfl_code='" +SENDING_FACILITY +
+                            "',file_no='" +PATIENT_CLINIC_NUMBER +
+                            "',SENDING_APPLICATION='" +SENDING_APPLICATION +
+                            "',art_date=" +new_art_date +
+                            ",group_id='" +GROUP_ID +
+                            "',client_type='" +PATIENT_TYPE +
+                            "',date_deceased=" +new_death_date + 
+                            //",status='" +DEATH_INDICATOR +
+                            ",processed='" +PROCESSED + 
+                            "' WHERE clinic_number='" +
+                            CCC_NUMBER +
+                            "'; ";
 
                         } else {
 
-                            var gateway_sql =
-                            "Insert into clients (f_name,m_name,l_name,dob,clinic_number,patient_clinic_number,mfl_code,gender,marital,phone_no,GODS_NUMBER,group_id, SENDING_APPLICATION, PATIENT_SOURCE, db_source, enrollment_date, art_date, client_type, locator_county, locator_sub_county, locator_ward, locator_village, message_type, date_deceased, death_status, processed) VALUES ('" +
-                            FIRST_NAME +
-                            "', '" +MIDDLE_NAME +
-                            "','" +LAST_NAME +
-                            "','" +new_date +
-                            "','" +CCC_NUMBER +
-                            "','" +PATIENT_CLINIC_NUMBER +
-                            "','" +SENDING_FACILITY +
-                            "','" +SEX +
-                            "','" +MARITAL_STATUS +
-                            "','" +PHONE_NUMBER +
-                            "','" +GODS_NUMBER +
-                            "','" +parseInt(GROUP_ID) +
-                            "','" +SENDING_APPLICATION +
-                            "','" +PATIENT_SOURCE +
-                            "','" +SENDING_APPLICATION +
-                            "','" +new_enroll_date +
-                            "','" +art_date +
-                            "','" +PATIENT_TYPE +
-                            "','" +COUNTY +
-                            "','" +SUB_COUNTY +
-                            "','" +WARD +
-                            "','" +VILLAGE +
-                            "','" +message_type +
-                            "','" +new_death_date + 
-                            "','" +DEATH_INDICATOR + 
-                            "','" +PROCESSED +
-                            "' )";
+                            
+                            var update_sql =
+                            "update clients SET mfl_code='" +SENDING_FACILITY +
+                            "',file_no='" +PATIENT_CLINIC_NUMBER +
+                            "',SENDING_APPLICATION='" +SENDING_APPLICATION +
+                            "',art_date='" +new_art_date +
+                            "',phone_no='" +PHONE_NUMBER +
+                            "',group_id='" +GROUP_ID +
+                            "',client_type='" +PATIENT_TYPE + 
+                            "',date_deceased='" +new_death_date + 
+                            //"',status='" +DEATH_INDICATOR +
+                            "',processed='" +PROCESSED + 
+                            +"' WHERE clinic_number='" +
+                            CCC_NUMBER +
+                            "'; ";
 
 
                         }
 
                         // Use the connection
-                        connection.query(gateway_sql, function(error, results, fields) {
+                        connection.query(update_sql, function(error, results, fields) {
                             // And done with the connection.
                             if (error) {
     
@@ -545,221 +940,7 @@ module.exports = function (app) {
                     }
                 });
 
-            } else if (message_type == "SIU^S12") {
-                var GODS_NUMBER = hl7_message.PATIENT_IDENTIFICATION.EXTERNAL_PATIENT_ID.ID;
-                var SENDING_FACILITY;
-    
-                var CCC_NUMBER;
-                var APPOINTMENT_REASON;
-                var APPOINTMENT_TYPE;
-                var APPOINTMENT_DATE;
-                var APPOINTMENT_PLACING_ENTITY;
-                var PLACER_APPOINTMENT_NUMBER;
-                var APPOINTMENT_LOCATION;
-                //var ACTION_CODE;
-                var APPOINTMENT_NOTE;
-                var APPOINTMENT_HONORED;
-                var VISIT_DATE;
-    
-                var result = get_json(hl7_message);
-    
-                for (var i = 0; i < result.length; i++) {
-                    var key = result[i].key;
-                    var key_value = result[i].value;
-    
-                    if (key == "NUMBER") {
-                        PLACER_APPOINTMENT_NUMBER = result[i].value;
-                    } else if (key == "GODS_NUMBER") {
-                        GODS_NUMBER = result[i].value;
-                    } else if (key == "APPOINTMENT_REASON") {
-                        APPOINTMENT_REASON = result[i].value;
-                    } else if (key == "APPOINTMENT_TYPE") {
-                        APPOINTMENT_TYPE = result[i].value;
-                    } else if (key == "VISIT_DATE") {
-                        VISIT_DATE = result[i].value;
-                    } else if (key == "APPOINTMENT_LOCATION") {
-                        APPOINTMENT_LOCATION = result[i].value;
-                    } else if (key == "APPINTMENT_HONORED") {
-                        APPOINTMENT_HONORED = result[i].value;
-                    } else if (key == "APPOINTMENT_NOTE") {
-                        APPOINTMENT_NOTE = result[i].value;
-                    } else if (key == "ACTION_CODE") {
-                        ACTION_CODE = result[i].value;
-                    } else if (key == "APPOINTMENT_PLACING_ENTITY") {
-                        APPOINTMENT_PLACING_ENTITY = result[i].value;
-                    } else if (key == "APPOINTMENT_DATE") {
-                        APPOINTMENT_DATE = result[i].value;
-                        APPOINTMENT_DATE = APPOINTMENT_DATE;
-    
-                        var year = APPOINTMENT_DATE.substring(0, 4);
-                        var month = APPOINTMENT_DATE.substring(4, 6);
-                        var day = APPOINTMENT_DATE.substring(6, 8);
-    
-                        var app_date = year + "-" + month + "-" + day;
-    
-                        var current_date = moment(new Date());
-                        var today = current_date.format("YYYY-MM-DD");
-    
-                        var BirthDate = moment(app_date);
-                        APPOINTMENT_DATE = BirthDate.format("YYYY-MM-DD");
-                    }
-                    
-                    if (key == "ID") {
-                        if (result[i + 1].value == "CCC_NUMBER") {
-                            CCC_NUMBER = result[i].value;
-                        }
-                    }
-                }
-    
-                if (CCC_NUMBER.length != 10 || isNaN(CCC_NUMBER)) {
-                    console.log("Invalid CCC NUMBER");
-                }
-    
-                if (!APPOINTMENT_TYPE) {
-                    APPOINTMENT_TYPE = 1;
-                }
-
-                connection.connect(function(err, connection) {
-                    if (err){
-
-                        console.log(err);
-
-                    } else {        
-    
-                        if (APPOINTMENT_LOCATION == "PHARMACY" || APPOINTMENT_REASON == "REGIMEN REFILL") {
-                            APPOINTMENT_TYPE = 1;
-                        } else {
-                            APPOINTMENT_TYPE = 2;
-                        }
-
-                        var APP_STATUS = "Booked";
-                        var ACTIVE_APP = "1";
-                        var SENDING_APPLICATION = hl7_message.MESSAGE_HEADER.SENDING_APPLICATION;
-                        var SENDING_FACILITY = hl7_message.MESSAGE_HEADER.SENDING_FACILITY;
-                        var PROCESSED = 0;
-                        
-                        var appointment_sql =
-                        "Insert into appointments (appntmnt_date,app_type_1,message_type,APPOINTMENT_REASON,app_status,db_source,active_app,APPOINTMENT_LOCATION,reason, placer_appointment_number, created_at, processed) VALUES ('" +
-                        APPOINTMENT_DATE +
-                        "','" +APPOINTMENT_TYPE +
-                        "','" +message_type +
-                        "','" +APPOINTMENT_REASON +
-                        "','" +APP_STATUS +
-                        "','" +SENDING_APPLICATION +
-                        "','" +ACTIVE_APP +
-                        "','" +APPOINTMENT_LOCATION +
-                        "','" +APPOINTMENT_NOTE +
-                        "','" +PLACER_APPOINTMENT_NUMBER +
-                        "','" +VISIT_DATE +
-                        "','" +PROCESSED +
-                        "')";
-                        // Use the connection
-                        console.log(appointment_sql);
-                        connection.query(appointment_sql, function(
-                            error,
-                            results,
-                            fields
-                        ) {
-                            if (error) {
-                                console.log(error);
-                            } else {
-                                console.log(results);
-                            }
-                            // And done with the connection.
-                           // connection.end();
-
-                            // Don't use the connection here, it has been returned to the pool.
-                        });
-
-                        
-                    } 
-
-                });	
-                
-            } else if(message_type === "ORU^R01") {
-
-                var GODS_NUMBER = jsonObj.PATIENT_IDENTIFICATION.EXTERNAL_PATIENT_ID.ID;
-                var CCC_NUMBER;
-                var FIRST_NAME = jsonObj.PATIENT_IDENTIFICATION.PATIENT_NAME.FIRST_NAME;
-                var MIDDLE_NAME = jsonObj.PATIENT_IDENTIFICATION.PATIENT_NAME.MIDDLE_NAME;
-                var LAST_NAME = jsonObj.PATIENT_IDENTIFICATION.PATIENT_NAME.LAST_NAME;
-                var SENDING_APPLICATION = jsonObj.MESSAGE_HEADER.SENDING_APPLICATION;
-                var SENDING_FACILITY = jsonObj.MESSAGE_HEADER.SENDING_FACILITY;
-                var OBSERVATION_VALUE;
-                var OBSERVATION_DATETIME;
-                var MESSAGE_TYPE = jsonObj.MESSAGE_HEADER.MESSAGE_TYPE;
-
-                var result = get_json(hl7_message);
-
-                console.log(result);
-
-                for (var i = 0; i < result.length; i++) {
-                    var key = result[i].key;                
-                    var value = result[i].value;
-            
-                    console.log(value)
-            
-                    if (key == "ID") {
-                        if (result[i + 1].value == "CCC_NUMBER") {
-                            CCC_NUMBER = result[i].value;
-                        }
-                    } else if(key = "OBSERVATION_IDENTIFIER") {
-                        if (result[i - 5].value == "OBSERVATION_VALUE") {
-                            OBSERVATION_VALUE = result[i].value;
-                        }
-                    } else if(key = "OBSERVATION_IDENTIFIER") {
-                        if (result[i + 7].value == "OBSERVATION_DATETIME") {
-                            OBSERVATION_DATETIME = result[i].value;
-                        }
-                    }
-            
-                }      
-
-                if (CCC_NUMBER.length != 10 || isNaN(CCC_NUMBER)) {
-                    response = `Invalid CCC Number: ${CCC_NUMBER}`;
-                    console.log(response);
-                    return;
-                }
-
-                connection.connect(function(err, connection) {
-                    if (err) {
-                        console.log(err);
-                        return;
-                    } else {
-                        var gateway_sql =
-                            "Insert into clients_oru(f_name,m_name,l_name,dob,clinic_number, message_type, mfl_code, SENDING_APPLICATION, observation_value,observation_datetime, observation_result) VALUES('" + 
-                            FIRST_NAME +
-                            "','" +LAST_NAME +
-                            "','" +MIDDLE_NAME +
-                            "','" +LAST_NAME +
-                            "','" +CCC_NUMBER +
-                            "','" +MESSAGE_TYPE +
-                            "','" +SENDING_FACILITY +
-                            "','" +SENDING_APPLICATION +
-                            "','" +OBSERVATION_VALUE +
-                            "','" +OBSERVATION_DATETIME +
-                            "' )";
-
-                        // Use the connection
-                        connection.query(gateway_sql, function(error, results, fields) {
-                            // And done with the connection.
-                            if (error) {
-    
-                                console.log(error);
-    
-                            } else {
-    
-                                console.log(results);
-                                connection.release();
-    
-                            }
-                            // Don't use the connection here, it has been returned to the pool.
-                        });    
-                    }        
-
-                });
-
-            }    
+            }  
 
         } else {
 

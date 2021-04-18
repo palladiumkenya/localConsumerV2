@@ -22,6 +22,7 @@
     "datetime-converter-nodejs": "^0.1.3",
     "exec-php": "0.0.4",
     "helmet": "^3.10.0",
+    "https": "^1.0.0",
     "internet-available": "^1.0.0",
     "jsonfile": "^4.0.0",
     "loopback": "^3.0.0",

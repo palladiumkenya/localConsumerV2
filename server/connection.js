@@ -29,7 +29,7 @@ connection.connect(function(err) {
     console.log("Table created", result);
   });
 
-  var clients_table = 'CREATE TABLE clients_oru(id int primary key auto_increment, f_name VARCHAR(150), m_name VARCHAR(150), l_name VARCHAR(150), clinic_number VARCHAR(40), mfl_code INTEGER(8), GODS_NUMBER VARCHAR(15), SENDING_APPLICATION VARCHAR(25), db_source VARCHAR(25), PATIENT_SOURCE VARCHAR(25), observation_value VARCHAR(40), observation_datetime DATETIME, processed INTEGER(4), date_processed DATETIME, date_deceased DATE NULL DEFAULT NULL, death_status VARCHAR(15), message_type VARCHAR(25), send_log VARCHAR(250), created_at timestamp DEFAULT now(), updated_at timestamp DEFAULT now())';
+  var clients_table = 'CREATE TABLE clients_oru(id int primary key auto_increment, f_name VARCHAR(150), m_name VARCHAR(150), l_name VARCHAR(150), clinic_number VARCHAR(40), mfl_code INTEGER(8), GODS_NUMBER VARCHAR(15), SENDING_APPLICATION VARCHAR(25), db_source VARCHAR(25), PATIENT_SOURCE VARCHAR(25), observation_value VARCHAR(40), observation_datetime DATETIME, processed INTEGER(4), date_processed DATETIME, death_status VARCHAR(15), message_type VARCHAR(25), send_log VARCHAR(250), created_at timestamp DEFAULT now(), updated_at timestamp DEFAULT now())';
   connection.query(clients_table, function (err, result) {
     if (err) throw err;
     console.log("Table created", result);

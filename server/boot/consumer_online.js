@@ -198,9 +198,19 @@ module.exports = function (app) {
         
             request(options, function (error, response, body) {
         
-                if (error) { console.log(error) }
+                if (error) {
+                    res.status(400).json({
+                        success: false,
+                        message: `Process failed:  ${error}`
+                    })
+                    console.log(error) 
+                }
         
                 //console.log(response);
+                res.status(200).json({
+                    success: true,
+                    message: `Process complete:  ${response}`
+                })
         
             });
             

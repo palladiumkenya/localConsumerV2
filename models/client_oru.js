@@ -2,7 +2,7 @@ const sequelize = require("../dbconnection");
 const Sequelize = require("sequelize");
 const Joi = require("joi");
 
-const Client = sequelize.sequelize.define(
+const ClientOru = sequelize.sequelize.define(
     "clients_oru", {
         id: {
             type: Sequelize.INTEGER,
@@ -40,7 +40,7 @@ const Client = sequelize.sequelize.define(
     }
 );
 
-function validateClient(client) {
+function validateClientOru(client) {
     const schema = {
         group_id: Joi.number(),
         mfl_code: Joi.number()
@@ -53,5 +53,5 @@ function validateClient(client) {
 
     return Joi.validate(client, schema);
 }
-exports.Client = Client;
-exports.validateClient = validateClient;
+exports.ClientOru = ClientOru;
+exports.validateClientOru = validateClientOru;

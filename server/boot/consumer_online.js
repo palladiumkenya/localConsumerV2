@@ -1,40 +1,31 @@
 var request = require("request");
-
 var moment = require("moment");
-
-
-
 var express = require("express");
-
 var axios = require("axios");
-
 var schedule = require("node-schedule");
-
-var connectivity = require("connectivity");
-
-var winston = require("winston");
-
-var https = require('https')
-
 var qs = require("qs");
-
 var internetAvailable = require("internet-available");
 
 //sql connection to live db
-
 let mysql = require('mysql');
-
 var config_local = require('../db_config/config_local');
-
 var DATE_TODAY = moment(new Date()).format("YYYY-MM-DD");
-
 process.env["NODE_TLS_REJECT_UNAUTHORIZED"] = 0;
-
 var express = require("express");
-
 var bodyParser = require("body-parser");
+var db = require("../db_config/config_local.js");
 
-var connection = mysql.createConnection(config_local.localDatabaseOptions);
+var _ = require("loadash");
+var Op = require("sequelize").Op;
+var {
+    Client
+} = require("../../models/client");
+const {
+    Appointment
+} = require("../../models/appointment");
+const {
+    ClientOru
+} = require("../../models/client_oru");
 
 
 // create a rolling file logger based on date/time that fires process events
@@ -115,12 +106,12 @@ module.exports = function (app) {
     
                             var test = results.forEach(result => {
     
-                                axios.post('https://il.mhealthkenya.co.ke/hl7-sync-client', qs.stringify(result))
+                                axios.post('https://il.mhealthkenya.co.ke/hl7-sync-client', result)
                                 .then(function (response){
                                     console.log(response.data)
     
                                     //update status of updated appointment
-                                    result = connection.query("update clients set processed ='Processed', date_processed ='"+DATE_TODAY+"', send_log='" +response.data +"' where id="+result.id+" ")
+                                    result = connection.query("update clients set processed ='Processed', date_processed ='"+DATE_TODAY+"', send_log='" +response.body +"' where id="+result.id+" ")
                                 })
                                 .catch(function (error){
     
@@ -149,7 +140,7 @@ module.exports = function (app) {
                                     console.log(response.data)
     
                                     //update status of updated appointment
-                                    result = connection.query("update appointments set processed ='Processed', date_processed ='"+DATE_TODAY+"', send_log='" +response.msg +"' where id="+result.id+" ")
+                                    result = connection.query("update appointments set processed ='Processed', date_processed ='"+DATE_TODAY+"', send_log='" +response.body +"' where id="+result.id+" ")
                                 })
                                 .catch(function (error){
     
@@ -178,7 +169,7 @@ module.exports = function (app) {
                                     console.log(response.data)
     
                                     //update status of updated appointment
-                                    result = connection.query("update clients_oru set processed ='Processed', date_processed ='"+DATE_TODAY+"', send_log='" +response.msg +"' where id="+result.id+" ")
+                                    result = connection.query("update clients_oru set processed ='Processed', date_processed ='"+DATE_TODAY+"', send_log='" +response.body +"' where id="+result.id+" ")
                                 })
                                 .catch(function (error){
     
@@ -348,8 +339,21 @@ module.exports = function (app) {
                             }
                         }
     
-                        if(key == "OBSERVATION_DATETIME") {
-                            ART_DATE = result[i].value;
+                        if(SENDING_APPLICATION == "ADT") {
+                            if(key == "OBSERVATION_IDENTIFIER") {
+                                if (result[i].value == "ART_START") {
+                                    ART_DATE = result[i+3].value;
+                                }  
+                            } 
+        
+                        } else if(SENDING_APPLICATION === "KENYAEMR") {
+                            if(key == "OBSERVATION_DATETIME") {
+                                if (result[i + 5].value == "CURRENT_REGIMEN") {
+                                    ART_DATE = result[i].value;
+                                }  
+                            } 
+        
+                                
                         }
                     }
     
@@ -378,95 +382,68 @@ module.exports = function (app) {
                         console.log(response);
                         return;
                     }
-    
-                    connection.connect(function(err) {
-                        if (err) {
-                            console.log(err);
-                            return;
-                        } else {
-    
-                            if(new_art_date == null) {
-    
-                                var gateway_sql =
-                                "Insert into clients (f_name,m_name,l_name,dob,clinic_number,patient_clinic_number,mfl_code,gender,marital,phone_no,GODS_NUMBER,group_id, SENDING_APPLICATION, PATIENT_SOURCE, db_source, enrollment_date, art_date, client_type, locator_county, locator_sub_county, locator_ward, locator_village, message_type, processed) VALUES ('" +
-                                FIRST_NAME +
-                                "', '" +MIDDLE_NAME +
-                                "','" +LAST_NAME +
-                                "','" +new_date +
-                                "','" +CCC_NUMBER +
-                                "','" +PATIENT_CLINIC_NUMBER +
-                                "','" +SENDING_FACILITY +
-                                "','" +SEX +
-                                "','" +MARITAL_STATUS +
-                                "','" +PHONE_NUMBER +
-                                "','" +GODS_NUMBER +
-                                "','" +parseInt(GROUP_ID) +
-                                "','" +SENDING_APPLICATION +
-                                "','" +PATIENT_SOURCE +
-                                "','" +SENDING_APPLICATION +
-                                "','" +new_enroll_date +
-                                "'," +new_art_date +
-                                ",'" +PATIENT_TYPE +
-                                "','" +COUNTY +
-                                "','" +SUB_COUNTY +
-                                "','" +WARD +
-                                "','" +VILLAGE +
-                                "','" +message_type +  
-                                "','" +PROCESSED +
-                                "' )";
-    
-                            } else {
-    
-                                var gateway_sql =
-                                "Insert into clients (f_name,m_name,l_name,dob,clinic_number,patient_clinic_number,mfl_code,gender,marital,phone_no,GODS_NUMBER,group_id, SENDING_APPLICATION, PATIENT_SOURCE, db_source, enrollment_date, art_date, client_type, locator_county, locator_sub_county, locator_ward, locator_village, message_type, processed) VALUES ('" +
-                                FIRST_NAME +
-                                "', '" +MIDDLE_NAME +
-                                "','" +LAST_NAME +
-                                "','" +new_date +
-                                "','" +CCC_NUMBER +
-                                "','" +PATIENT_CLINIC_NUMBER +
-                                "','" +SENDING_FACILITY +
-                                "','" +SEX +
-                                "','" +MARITAL_STATUS +
-                                "','" +PHONE_NUMBER +
-                                "','" +GODS_NUMBER +
-                                "','" +parseInt(GROUP_ID) +
-                                "','" +SENDING_APPLICATION +
-                                "','" +PATIENT_SOURCE +
-                                "','" +SENDING_APPLICATION +
-                                "','" +new_enroll_date +
-                                "','" +new_art_date +
-                                "','" +PATIENT_TYPE +
-                                "','" +COUNTY +
-                                "','" +SUB_COUNTY +
-                                "','" +WARD +
-                                "','" +VILLAGE +
-                                "','" +message_type +  
-                                "','" +PROCESSED +
-                                "' )";
-    
+
+                    client = {
+                        f_name: FIRST_NAME,
+                        m_name: MIDDLE_NAME,
+                        l_name: LAST_NAME,
+                        dob: new_date,
+                        clinic_number: CCC_NUMBER,
+                        patient_clinic_number: PATIENT_CLINIC_NUMBER,
+                        mfl_code: parseInt(SENDING_FACILITY),
+                        gender: parseInt(SEX),
+                        marital: MARITAL_STATUS,
+                        phone_no: PHONE_NUMBER,
+                        GODS_NUMBER: GODS_NUMBER,
+                        group_id: parseInt(GROUP_ID),
+                        SENDING_APPLICATION: SENDING_APPLICATION,
+                        db_source: SENDING_APPLICATION,
+                        PATIENT_SOURCE: PATIENT_SOURCE,
+                        enrollment_date: new_enroll_date,
+                        art_date: new_art_date,
+                        client_type: PATIENT_TYPE,
+                        locator_county: COUNTY,
+                        locator_sub_county: SUB_COUNTY,
+                        locator_ward: WARD,
+                        locator_village: VILLAGE,
+                        message_type: MESSAGE_TYPE,
+                        processed: PROCESSED
+                    }
+
+                    console.log(client)
+
+                    await Client.create(client)
+                    .then(function (model) {
+                        message = "OK";
+                        response = "Client saved on local db";
+
+                        return res.json({
+                            message: message,
+                            response: {
+                                msg = response,
+                                client: _.pick(client, [
+                                    id,
+                                    clinic_number,
+                                    f_name,
+                                    l_name,
+                                    created_at
+                                ])
+                            } 
+                        })
+                    })
+                    .catch(function (error) {
+                        code = 500;
+                        response = err.message;
+                        console.log(error)
+
+                        return res.status(400).json({
+                            response: {
+                                msg: response,
+                                errors: err.errors
                             }
+                        })
+                    })
     
-                                
-    
-    
-                            // Use the connection
-                            connection.query(gateway_sql, function(error, results, fields) {
-                                // And done with the connection.
-                                if (error) {
-        
-                                    console.log(error);
-        
-                                } else {
-        
-                                    console.log(gateway_sql,results);
-        
-                                }
-                                // Don't use the connection here, it has been returned to the pool.
-                            });
-    
-                        }
-                    });
     
                 } else if (message_type == "SIU^S12") {
                     var GODS_NUMBER = hl7_message.PATIENT_IDENTIFICATION.EXTERNAL_PATIENT_ID.ID;
@@ -542,63 +519,65 @@ module.exports = function (app) {
                     if (!APPOINTMENT_TYPE) {
                         APPOINTMENT_TYPE = 1;
                     }
-    
-                    connection.connect(function(err) {
-                        if (err){
-    
-                            console.log(err);
-    
-                        } else {        
-        
-                            if (APPOINTMENT_LOCATION == "PHARMACY" || APPOINTMENT_REASON == "REGIMEN REFILL") {
-                                APPOINTMENT_TYPE = 1;
-                            } else {
-                                APPOINTMENT_TYPE = 2;
+
+                    if (APPOINTMENT_LOCATION == "PHARMACY" || APPOINTMENT_REASON == "REGIMEN REFILL") {
+                        APPOINTMENT_TYPE = 1;
+                    } else {
+                        APPOINTMENT_TYPE = 2;
+                    }
+
+                    var APP_STATUS = "Booked";
+                    var ACTIVE_APP = "1";
+                    var SENDING_APPLICATION = hl7_message.MESSAGE_HEADER.SENDING_APPLICATION;
+                    var SENDING_FACILITY = hl7_message.MESSAGE_HEADER.SENDING_FACILITY;
+
+                    let appointment = {
+                        appntmnt_date: APPOINTMENT_DATE,
+                        app_type_1: APPOINTMENT_TYPE,
+                        clinic_number: CCC_NUMBER,
+                        message_type: MESSAGE_TYPE,
+                        APPOINTMENT_REASON: APPOINTMENT_REASON,
+                        app_status: APP_STATUS,
+                        db_source: SENDING_APPLICATION,
+                        active_app: ACTIVE_APP,
+                        APPOINTMENT_LOCATION: APPOINTMENT_LOCATION,
+                        reason: APPOINTMENT_NOTE,
+                        placer_appointment_number: PLACER_APPOINTMENT_NUMBER,
+                        created_at: VISIT_DATE,
+                        processed: PROCESSED
+                    }
+
+                    await Appointment.create(appointment)
+                    .then(async function (data) {
+                        console.log(data)
+                        message = "OK";
+                        response = "Appointment saved in local db"
+
+                        return res.json({
+                            message: message,
+                            response: {
+                                msg = response,
+                                appointment: _.pick(appointment, [
+                                    id,
+                                    clinic_number,
+                                    appntmnt_date
+                                ])
                             }
-    
-                            var APP_STATUS = "Booked";
-                            var ACTIVE_APP = "1";
-                            var SENDING_APPLICATION = hl7_message.MESSAGE_HEADER.SENDING_APPLICATION;
-                            var SENDING_FACILITY = hl7_message.MESSAGE_HEADER.SENDING_FACILITY;
-                            
-                            var appointment_sql =
-                            "Insert into appointments (appntmnt_date,app_type_1,clinic_number,message_type,APPOINTMENT_REASON,app_status,db_source,active_app,APPOINTMENT_LOCATION,reason, placer_appointment_number, created_at, processed) VALUES ('" +
-                            APPOINTMENT_DATE +
-                            "','" +APPOINTMENT_TYPE +
-                            "','" +CCC_NUMBER +
-                            "','" +message_type +
-                            "','" +APPOINTMENT_REASON +
-                            "','" +APP_STATUS +
-                            "','" +SENDING_APPLICATION +
-                            "','" +ACTIVE_APP +
-                            "','" +APPOINTMENT_LOCATION +
-                            "','" +APPOINTMENT_NOTE +
-                            "','" +PLACER_APPOINTMENT_NUMBER +
-                            "','" +VISIT_DATE +
-                            "','" +PROCESSED +
-                            "')";
-                            // Use the connection
-                            console.log(appointment_sql);
-                            connection.query(appointment_sql, function(
-                                error,
-                                results,
-                                fields
-                            ) {
-                                if (error) {
-                                    console.log(error);
-                                } else {
-                                    console.log(results);
-                                }
-                                // And done with the connection.
-                               // connection.end();
-    
-                                // Don't use the connection here, it has been returned to the pool.
-                            });
-    
-                            
-                        } 
-    
-                    });	
+                        })
+                        
+                    })
+                    .catch(function (error) {
+                        code = 500;
+                        response = err.message;
+                        console.log(error)
+
+                        return res.status(400).json({
+                            response: {
+                                msg: response,
+                                errors: err.errors
+                            }
+                        })
+                    })
                     
                 } else if(message_type === "ORU^R01") {
     
@@ -612,8 +591,6 @@ module.exports = function (app) {
                     var OBSERVATION_VALUE;
                     var OBSERVATION_DATETIME;
                     var MESSAGE_TYPE = hl7_message.MESSAGE_HEADER.MESSAGE_TYPE;
-                    var DEATH_DATE;
-                    var DEATH_INDICATOR;
                     var PROCESSED = 'Pending';
     
                     var result = get_json(hl7_message);
@@ -663,89 +640,70 @@ module.exports = function (app) {
                     var observation_second = OBSERVATION_DATETIME.substring(12, 14);
                     var new_observation_date = observation_year + "-" + observation_month + "-" + observation_day + " " + observation_hour + ":" + observation_minute + ":" + observation_second;
     
-                    connection.connect(function(err) {
-                        if (err) {
-                            console.log(err);
-                            return;
-                        } else {
-    
-                            if(OBSERVATION_VALUE == "TRANSFER_OUT") {
-    
-                                var new_value = "Transfer Out";
-    
-                                var gateway_sql =
-                                "Insert into clients_oru(f_name,m_name,l_name,clinic_number, message_type, mfl_code, SENDING_APPLICATION, observation_value,observation_datetime, death_status, processed) VALUES('" + 
-                                FIRST_NAME +
-                                "','" +MIDDLE_NAME +
-                                "','" +LAST_NAME +
-                                "','" +CCC_NUMBER +
-                                "','" +MESSAGE_TYPE +
-                                "','" +SENDING_FACILITY +
-                                "','" +SENDING_APPLICATION +
-                                "','" +new_value +
-                                "','" +new_observation_date +
-                                "','" +death_ind +
-                                "','" +PROCESSED +
-                                "' )";
-    
-                            } else if(OBSERVATION_VALUE == "DIED") {
-    
-                                var new_value = "Deceased";
-    
-                                var gateway_sql =
-                                "Insert into clients_oru(f_name,m_name,l_name,clinic_number, message_type, mfl_code, SENDING_APPLICATION, observation_value,observation_datetime, death_status,processed) VALUES('" + 
-                                FIRST_NAME +
-                                "','" +MIDDLE_NAME +
-                                "','" +LAST_NAME +
-                                "','" +CCC_NUMBER +
-                                "','" +MESSAGE_TYPE +
-                                "','" +SENDING_FACILITY +
-                                "','" +SENDING_APPLICATION +
-                                "','" +new_value +
-                                "','" +new_observation_date +
-                                "','" +death_ind +
-                                "','" +PROCESSED +
-                                "' )";
-    
-                            } else if(OBSERVATION_VALUE == "LOST_TO_FOLLOWUP") {
-    
-                                var new_value = "LTFU";
-    
-                                var gateway_sql =
-                                "Insert into clients_oru(f_name,m_name,l_name,clinic_number, message_type, mfl_code, SENDING_APPLICATION, observation_value,observation_datetime, death_status, processed) VALUES('" + 
-                                FIRST_NAME +
-                                "','" +MIDDLE_NAME +
-                                "','" +LAST_NAME +
-                                "','" +CCC_NUMBER +
-                                "','" +MESSAGE_TYPE +
-                                "','" +SENDING_FACILITY +
-                                "','" +SENDING_APPLICATION +
-                                "','" +new_value +
-                                "','" +new_observation_date +
-                                "','" +death_ind +
-                                "','" +PROCESSED +
-                                "' )";
-    
+                    if(OBSERVATION_VALUE == "TRANSFER_OUT") {
+
+                        var new_value = "Transfer Out";
+
+                    } else if(OBSERVATION_VALUE == "DIED") {
+
+                        var new_value = "Deceased";
+
+                    } else if(OBSERVATION_VALUE == "LOST_TO_FOLLOWUP") {
+
+                        var new_value = "LTFU";
+
+                    }   
+
+                    observation = {
+
+                       f_name: FIRST_NAME,
+                       m_name: MIDDLE_NAME,
+                       l_name: LAST_NAME,
+                       clinic_number: CCC_NUMBER,
+                       message_type: MESSAGE_TYPE,
+                       mfl_code: SENDING_FACILITY,
+                       SENDING_APPLICATION: SENDING_APPLICATION,
+                       observation_value: new_value,
+                       new_observation_datetime: new_observation_date,
+                       death_status: death_ind,
+                       processed: PROCESSED
+
+                    } 
+                    
+                    console.log(client)
+
+                    await ClientOru.create(client_oru)
+                    .then(function (model) {
+                        message = "OK";
+                        response = "Client Observation saved on local db";
+
+                        return res.json({
+                            message: message,
+                            response: {
+                                msg = response,
+                                client: _.pick(client, [
+                                    id,
+                                    clinic_number,
+                                    f_name,
+                                    l_name,
+                                    observation_value
+                                ])
                             } 
-    
-                            
-    
-                            //Use the connection
-                            connection.query(gateway_sql, function(error, results, fields) {
-                                // And done with the connection.
-                                if (error) {
-        
-                                    console.log(error);
-        
-                                } else {
-        
-                                    console.log(gateway_sql,results);    
-                                }
-                                // Don't use the connection here, it has been returned to the pool.
-                            });    
-                        }        
-    
-                    });
+                        })
+                    })
+                    .catch(function (error) {
+                        code = 500;
+                        response = err.message;
+                        console.log(error)
+
+                        return res.status(400).json({
+                            response: {
+                                msg: response,
+                                errors: err.errors
+                            }
+                        })
+                    })
+
     
                 } else if(message_type == "ADT^A08") {
     
@@ -839,10 +797,20 @@ module.exports = function (app) {
                             }
                         }
     
-                        if(key == "OBSERVATION_DATETIME") {
-                            if (result[i + 5].value == "CURRENT_REGIMEN") {
-                                ART_DATE = result[i].value;
-                            }
+                        if(SENDING_APPLICATION == "ADT") {
+                            if(key == "OBSERVATION_IDENTIFIER") {
+                                if (result[i].value == "ART_START") {
+                                    ART_DATE = result[i+3].value;
+                                }  
+                            } 
+        
+                        } else if(SENDING_APPLICATION === "KENYAEMR") {
+                            if(key == "OBSERVATION_DATETIME") {
+                                if (result[i + 5].value == "CURRENT_REGIMEN") {
+                                    ART_DATE = result[i].value;
+                                }  
+                            } 
+                                
                         }
                     }
     
@@ -851,71 +819,88 @@ module.exports = function (app) {
                     var enroll_day = ENROLLMENT_DATE.substring(6, 8);
                     var new_enroll_date = enroll_year + "-" + enroll_month + "-" + enroll_day;
     
-                    var art_year = ART_DATE.substring(0, 4);
-                    var art_month = ART_DATE.substring(4, 6);
-                    var art_day = ART_DATE.substring(6, 8);
-                    var new_art_date = art_year + "-" + art_month + "-" + art_day;
+                    if(ART_DATE == "" || ART_DATE == undefined ) {
+    
+                        var new_art_date = null;
+    
+                    } else {
+    
+                        var art_year = ART_DATE.substring(0, 4);
+                        var art_month = ART_DATE.substring(4, 6);
+                        var art_day = ART_DATE.substring(6, 8);
+                        var new_art_date = art_year + "-" + art_month + "-" + art_day;
+    
+                    }
     
                     if (CCC_NUMBER.length != 10 || isNaN(CCC_NUMBER)) {
                         response = `Invalid CCC Number: ${CCC_NUMBER}`;
                         console.log(response);
                         return;
                     }
-    
-                    connection.connect(function(err) {
-                        if (err) {
-                            console.log(err);
-                            return;
-                        } else {
-     
-                            var update_sql =
-                            "Insert into clients (f_name,m_name,l_name,dob,clinic_number,patient_clinic_number,mfl_code,gender,marital,phone_no,GODS_NUMBER,group_id, SENDING_APPLICATION, PATIENT_SOURCE, db_source, enrollment_date, art_date, client_type, locator_county, locator_sub_county, locator_ward, locator_village, message_type, processed) VALUES ('" +
-                            FIRST_NAME +
-                            "', '" +MIDDLE_NAME +
-                            "','" +LAST_NAME +
-                            "','" +new_date +
-                            "','" +CCC_NUMBER +
-                            "','" +PATIENT_CLINIC_NUMBER +
-                            "','" +SENDING_FACILITY +
-                            "','" +SEX +
-                            "','" +MARITAL_STATUS +
-                            "','" +PHONE_NUMBER +
-                            "','" +GODS_NUMBER +
-                            "','" +parseInt(GROUP_ID) +
-                            "','" +SENDING_APPLICATION +
-                            "','" +PATIENT_SOURCE +
-                            "','" +SENDING_APPLICATION +
-                            "','" +new_enroll_date +
-                            "','" +new_art_date +
-                            "','" +PATIENT_TYPE +
-                            "','" +COUNTY +
-                            "','" +SUB_COUNTY +
-                            "','" +WARD +
-                            "','" +VILLAGE +
-                            "','" +message_type +  
-                            "','" +PROCESSED +
-                            "' )";
-    
-    
-                            // Use the connection
-                            connection.query(update_sql, function(error, results, fields) {
-                                // And done with the connection.
-                                if (error) {
-        
-                                    console.log(error);
-        
-                                } else {
-        
-                                    console.log(results);
-        
-                                }
-                                // Don't use the connection here, it has been returned to the pool.
-                            });
-    
-                        }
-                    });
-    
-                }  
+
+                    client = {
+                        f_name: FIRST_NAME,
+                        m_name: MIDDLE_NAME,
+                        l_name: LAST_NAME,
+                        dob: new_date,
+                        clinic_number: CCC_NUMBER,
+                        patient_clinic_number: PATIENT_CLINIC_NUMBER,
+                        mfl_code: parseInt(SENDING_FACILITY),
+                        gender: parseInt(SEX),
+                        marital: MARITAL_STATUS,
+                        phone_no: PHONE_NUMBER,
+                        GODS_NUMBER: GODS_NUMBER,
+                        group_id: parseInt(GROUP_ID),
+                        SENDING_APPLICATION: SENDING_APPLICATION,
+                        db_source: SENDING_APPLICATION,
+                        PATIENT_SOURCE: PATIENT_SOURCE,
+                        enrollment_date: new_enroll_date,
+                        art_date: new_art_date,
+                        client_type: PATIENT_TYPE,
+                        locator_county: COUNTY,
+                        locator_sub_county: SUB_COUNTY,
+                        locator_ward: WARD,
+                        locator_village: VILLAGE,
+                        message_type: MESSAGE_TYPE,
+                        processed: PROCESSED
+                    }
+
+                    console.log(client)
+
+                    await Client.create(client)
+                    .then(function (model) {
+                        message = "OK";
+                        response = "Client saved on local db";
+
+                        return res.json({
+                            message: message,
+                            response: {
+                                msg = response,
+                                client: _.pick(client, [
+                                    id,
+                                    clinic_number,
+                                    f_name,
+                                    l_name,
+                                    created_at
+                                ])
+                            } 
+                        })
+                    })
+                    .catch(function (error) {
+                        code = 500;
+                        response = err.message;
+                        console.log(error)
+
+                        return res.status(400).json({
+                            response: {
+                                msg: response,
+                                errors: err.errors
+                            }
+                        })
+                    })
+
+                }    
+
     
             } else {
     

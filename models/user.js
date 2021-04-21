@@ -16,10 +16,9 @@ const User = sequelize.sequelize.define(
   },
   {
     timestamps: true,
-    paranoid: true,
     underscored: true,
     freezeTableName: true,
-    tableName: "tbl_users"
+    tableName: "users"
   }
 );
 

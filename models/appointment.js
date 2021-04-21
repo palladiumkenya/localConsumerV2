@@ -1,8 +1,5 @@
-const sequelize = require("../dbconnection");
+const sequelize = require("../server/db_config/config_local");
 const Sequelize = require("sequelize");
-const {
-    AppointmentType
-} = require("./appointment_type");
 
 const Appointment = sequelize.sequelize.define(
     "appointments", {
@@ -19,8 +16,8 @@ const Appointment = sequelize.sequelize.define(
         },
         appntmnt_date: Sequelize.DATEONLY,
         app_type_1: Sequelize.INTEGER,
-        SENDING_APPLICATION: Sequelize.STRING,
-        APPOINTMENT_REASON: Sequelize.STRING,
+        sending_application: Sequelize.STRING,
+        appointment_reason: Sequelize.STRING,
         app_status: Sequelize.ENUM(
             "Booked",
             "Notified",
@@ -30,11 +27,11 @@ const Appointment = sequelize.sequelize.define(
         ),
         db_source: Sequelize.STRING,
         active_app: Sequelize.INTEGER,
-        APPOINTMENT_LOCATION: Sequelize.STRING,
+        appointment_location: Sequelize.STRING,
         reason: Sequelize.STRING,
         processed: Sequelize.STRING,
         date_processed: Sequelize.DATE,
-        placer_appointment_numbr: Sequelize.STRING,
+        placer_appointment_number: Sequelize.STRING,
         mfl_code: {
             type: Sequelize.INTEGER,
             len: 5
@@ -43,10 +40,9 @@ const Appointment = sequelize.sequelize.define(
         send_log: Sequelize.STRING
     }, {
         timestamps: true,
-        paranoid: true,
         underscored: true,
         freezeTableName: true,
-        tableName: "tbl_appointment"
+        tableName: "appointments"
     }
 );
 // Appointment.belongsTo(AppointmentType, {

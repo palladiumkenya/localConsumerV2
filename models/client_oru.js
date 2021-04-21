@@ -1,4 +1,4 @@
-const sequelize = require("../dbconnection");
+const sequelize = require("../server/db_config/config_local");
 const Sequelize = require("sequelize");
 const Joi = require("joi");
 
@@ -22,10 +22,10 @@ const ClientOru = sequelize.sequelize.define(
             type: Sequelize.INTEGER,
             len: 5
         },
-        GODS_NUMBER: Sequelize.STRING,
-        SENDING_APPLICATION: Sequelize.STRING,
-        obsrvation_value: Sequelize.STRING,
-        obsrvation_datetime: Sequelize.DATE,
+        gods_number: Sequelize.STRING,
+        sending_application: Sequelize.STRING,
+        observation_value: Sequelize.STRING,
+        observation_datetime: Sequelize.DATE,
         processed: Sequelize.STRING,
         date_processed: Sequelize.DATEONLY,
         message_type: Sequelize.STRING,
@@ -33,10 +33,9 @@ const ClientOru = sequelize.sequelize.define(
         
     }, {
         timestamps: true,
-        paranoid: true,
         underscored: true,
         freezeTableName: true,
-        tableName: "tbl_client"
+        tableName: "clients_oru"
     }
 );
 

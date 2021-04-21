@@ -1,4 +1,4 @@
-const sequelize = require("../dbconnection");
+const sequelize = require("../server/db_config/config_local");
 const Sequelize = require("sequelize");
 const Joi = require("joi");
 
@@ -27,11 +27,11 @@ const Client = sequelize.sequelize.define(
         gender: Sequelize.NUMBER,
         marital: Sequelize.NUMBER,
         phone_no: Sequelize.STRING,
-        GODS_NUMBER: Sequelize.STRING,
+        gods_number: Sequelize.STRING,
         group_id: Sequelize.INTEGER,
-        SENDING_APPLICATION: Sequelize.STRING,
+        sending_application: Sequelize.STRING,
         db_source: Sequelize.STRING,
-        PATIENT_SOURCE: Sequelize.STRING,
+        patient_source: Sequelize.STRING,
         enrollment_date: Sequelize.DATEONLY,
         art_date: {
             type: Sequelize.DATEONLY,
@@ -60,10 +60,9 @@ const Client = sequelize.sequelize.define(
         
     }, {
         timestamps: true,
-        paranoid: true,
         underscored: true,
         freezeTableName: true,
-        tableName: "tbl_client"
+        tableName: "clients"
     }
 );
 

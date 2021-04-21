@@ -41,6 +41,12 @@ connection.connect(function(err) {
     console.log("Table created", result);
   });
 
+  var logs = 'CREATE TABLE logs(id int primary key auto_increment, f_name VARCHAR(150), m_name VARCHAR(150), l_name VARCHAR(150), clinic_number VARCHAR(40), file_no VARCHAR(35), sending_application VARCHAR(35), send_log VARCHAR(255), created_at timestamp DEFAULT now(), updated_at timestamp DEFAULT now()  )';
+  connection.query(logs, function(err, result) {
+    if (err) throw err;
+    console.log("Table created", result);
+  });
+
   var create_user = "INSERT INTO users(username, password) VALUES ('admin', 'admin')";
   connection.query(create_user, function (err, result) {
     if(err) throw err;

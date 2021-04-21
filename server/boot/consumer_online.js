@@ -68,7 +68,6 @@ module.exports = function (app) {
 
 		"use strict";
 
-
 		var hl7_message = (req.body);
 
         internetAvailable().then(function(){
@@ -108,7 +107,7 @@ module.exports = function (app) {
                     } else {
     
                         //check unsent clients
-                        connection.query("select * from clients where processed=0 ", function (err, results, fields) {
+                        connection.query("select * from clients where processed='Pending' ", function (err, results, fields) {
                             
                             if(err) {console.log(err)};
             
@@ -121,14 +120,14 @@ module.exports = function (app) {
                                     console.log(response.data)
     
                                     //update status of updated appointment
-                                    result = connection.query("update clients set processed ='1', date_processed ='"+DATE_TODAY+"', send_log='" +response.data +"' where id="+result.id+" ")
+                                    result = connection.query("update clients set processed ='Processed', date_processed ='"+DATE_TODAY+"', send_log='" +response.data +"' where id="+result.id+" ")
                                 })
                                 .catch(function (error){
     
                                     console.log(error )
     
                                     //update appointment with error
-                                    result = connection.query("update clients set date_processed ='"+DATE_TODAY+"', send_log='" +error +"' where id="+result.id+" ")
+                                    result = connection.query("update clients set date_processed ='"+DATE_TODAY+"', send_log='" +error.message +"' where id="+result.id+" ")
     
                                 })
                                 
@@ -137,7 +136,7 @@ module.exports = function (app) {
                         });	
     
                         //check unsent appointments
-                        connection.query("select * from appointments where processed=0 ", function (err, results, fields) {
+                        connection.query("select * from appointments where processed='Pending' ", function (err, results, fields) {
                             
                             if(err) {console.log(err)};
             
@@ -150,14 +149,14 @@ module.exports = function (app) {
                                     console.log(response.data)
     
                                     //update status of updated appointment
-                                    result = connection.query("update appointments set processed ='1', date_processed ='"+DATE_TODAY+"', send_log='" +response.data +"' where id="+result.id+" ")
+                                    result = connection.query("update appointments set processed ='Processed', date_processed ='"+DATE_TODAY+"', send_log='" +response.msg +"' where id="+result.id+" ")
                                 })
                                 .catch(function (error){
     
                                     console.log(error )
     
                                     //update appointment with error
-                                    result = connection.query("update appointments set date_processed ='"+DATE_TODAY+"', send_log='" +error +"' where id="+result.id+" ")
+                                    result = connection.query("update appointments set date_processed ='"+DATE_TODAY+"', send_log='" +error.message +"' where id="+result.id+" ")
     
                                 })
                                 
@@ -166,7 +165,7 @@ module.exports = function (app) {
                         });	
     
                         //check unsent observations
-                        connection.query("select * from clients_oru where processed=0 ", function (err, results, fields) {
+                        connection.query("select * from clients_oru where processed='Pending' ", function (err, results, fields) {
                             
                             if(err) {console.log(err)};
             
@@ -179,14 +178,14 @@ module.exports = function (app) {
                                     console.log(response.data)
     
                                     //update status of updated appointment
-                                    result = connection.query("update clients_oru set processed ='1', date_processed ='"+DATE_TODAY+"', send_log='" +response.data +"' where id="+result.id+" ")
+                                    result = connection.query("update clients_oru set processed ='Processed', date_processed ='"+DATE_TODAY+"', send_log='" +response.msg +"' where id="+result.id+" ")
                                 })
                                 .catch(function (error){
     
                                     console.log(error )
     
                                     //update appointment with error
-                                    result = connection.query("update clients_oru set date_processed ='"+DATE_TODAY+"', send_log='" +error +"' where id="+result.id+" ")
+                                    result = connection.query("update clients_oru set date_processed ='"+DATE_TODAY+"', send_log='" +error.message +"' where id="+result.id+" ")
     
                                 })
                                 
@@ -245,6 +244,7 @@ module.exports = function (app) {
             
         
         }).catch(function(error){
+    
             console.log("No internet, saving data locally", error);
     
             //if offline push data from request to local db
@@ -278,8 +278,8 @@ module.exports = function (app) {
                     var WARD = hl7_message.PATIENT_IDENTIFICATION.PATIENT_ADDRESS.PHYSICAL_ADDRESS.WARD;
                     var VILLAGE = hl7_message.PATIENT_IDENTIFICATION.PATIENT_ADDRESS.PHYSICAL_ADDRESS.VILLAGE;
                     var ART_DATE;
-                    var PROCESSED = 0;
-    
+                    var PROCESSED = 'Pending';  
+
                     var result = get_json(hl7_message);
     
                     console.log(result);
@@ -483,6 +483,7 @@ module.exports = function (app) {
                     var APPOINTMENT_NOTE;
                     var APPOINTMENT_HONORED;
                     var VISIT_DATE;
+                    var PROCESSED = 'Pending';
         
                     var result = get_json(hl7_message);
         
@@ -559,7 +560,6 @@ module.exports = function (app) {
                             var ACTIVE_APP = "1";
                             var SENDING_APPLICATION = hl7_message.MESSAGE_HEADER.SENDING_APPLICATION;
                             var SENDING_FACILITY = hl7_message.MESSAGE_HEADER.SENDING_FACILITY;
-                            var PROCESSED = 0;
                             
                             var appointment_sql =
                             "Insert into appointments (appntmnt_date,app_type_1,clinic_number,message_type,APPOINTMENT_REASON,app_status,db_source,active_app,APPOINTMENT_LOCATION,reason, placer_appointment_number, created_at, processed) VALUES ('" +
@@ -614,7 +614,7 @@ module.exports = function (app) {
                     var MESSAGE_TYPE = hl7_message.MESSAGE_HEADER.MESSAGE_TYPE;
                     var DEATH_DATE;
                     var DEATH_INDICATOR;
-                    var PROCESSED = 0;
+                    var PROCESSED = 'Pending';
     
                     var result = get_json(hl7_message);
     
@@ -769,7 +769,7 @@ module.exports = function (app) {
                     var WARD = hl7_message.PATIENT_IDENTIFICATION.PATIENT_ADDRESS.PHYSICAL_ADDRESS.WARD;
                     var VILLAGE = hl7_message.PATIENT_IDENTIFICATION.PATIENT_ADDRESS.PHYSICAL_ADDRESS.VILLAGE;
                     var ART_DATE;
-                    var PROCESSED = 0;
+                    var PROCESSED = 'Pending';
     
                     var result = get_json(hl7_message);
     
@@ -923,7 +923,7 @@ module.exports = function (app) {
             }	
     
         });
-
+        
     }); 
 
     

@@ -71,22 +71,10 @@ module.exports = function (app) {
             var send_results_job = schedule.scheduleJob("10 * * * * * ", function (fireDate) {
     
                 // If internet push data from local to live
-    
-                var DATE_TODAY = moment(new Date()).format("YYYY-MM-DD H:m:s");
-    
+                var DATE_TODAY = moment(new Date()).format("YYYY-MM-DD H:m:s");    
                     console.log(DATE_TODAY);
     
-                    console.log(
-    
-                    "This sync is supposed to run at => " +
-    
-                        DATE_TODAY +
-    
-                        "And FireDate => " +
-    
-                        fireDate +
-    
-                        " "
+                    console.log("This sync is supposed to run at => " +DATE_TODAY +"And FireDate => " +fireDate +" "
     
                 );
         
@@ -132,15 +120,14 @@ module.exports = function (app) {
                                     }); 
                     
                                 } else if(response) {
-    
                                     console.log(response.body)
-    
-                                       // update status of updated client
-                                    Client.update({ processed: "Processed", date_processed: DATE_TODAY, send_log: response.body.message }, {
-                                        where: {
-                                            id: result.id
-                                        }
-                                    });                            
+
+                                    if (response.statusCode == 200)
+                                        Client.destroy({
+                                            where: {
+                                                id: result.id
+                                            }
+                                        });                            
     
                                 }
     
@@ -148,8 +135,8 @@ module.exports = function (app) {
                     
                     });
     
-                }); 
-                    
+                });
+
                 let results1 = Appointment.findAll({
                         where: {
                             processed: 'Pending'
@@ -194,11 +181,12 @@ module.exports = function (app) {
                                     console.log(response.body)
     
                                     // update status of updated appointment
-                                    Appointment.update({ processed: "Processed", date_processed: DATE_TODAY, send_log: response.body.message }, {
-                                        where: {
-                                            id: result.id
-                                        }
-                                    });                           
+                                    if (response.statusCode == 200)
+                                        Appointment.destroy({ 
+                                            where: {
+                                                id: result.id
+                                            }
+                                        });
     
                                 }
     
@@ -250,14 +238,12 @@ module.exports = function (app) {
                             } else if(response) {
     
                                 console.log(response.body)
-    
-                                   // update status of updated client
-                                ClientOru.update({ processed: "Processed", date_processed: DATE_TODAY, send_log: response.body.message }, {
-                                    where: {
-                                        id: result.id
-                                    }
-                                });                            
-    
+                                if (response.statusCode == 200) 
+                                    ClientOru.destroy({
+                                        where: {
+                                            id: result.id
+                                        }
+                                    });
                             }
     
                         });

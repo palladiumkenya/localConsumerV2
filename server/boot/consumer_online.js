@@ -63,37 +63,24 @@ module.exports = function (app) {
 
 		var hl7_message = (req.body);
 
-
         internetAvailable().then(function(){
             console.log("Internet available");
-
+    
             //if online run cron job to post from local db to sync endpoints
-
+    
             var send_results_job = schedule.scheduleJob("10 * * * * * ", function (fireDate) {
-
+    
                 // If internet push data from local to live
-
-                var DATE_TODAY = moment(new Date()).format("YYYY-MM-DD H:m:s");
-
+                var DATE_TODAY = moment(new Date()).format("YYYY-MM-DD H:m:s");    
                     console.log(DATE_TODAY);
-
-                    console.log(
-
-                    "This sync is supposed to run at => " +
-
-                        DATE_TODAY +
-
-                        "And FireDate => " +
-
-                        fireDate +
-
-                        " "
-
+    
+                    console.log("This sync is supposed to run at => " +DATE_TODAY +"And FireDate => " +fireDate +" "
+    
                 );
         
             
                 
-
+    
                 let results = Client.findAll({
                     where: {
                         processed: 'Pending'
@@ -101,7 +88,7 @@ module.exports = function (app) {
                     }).then(function (results) {
                     
                         results.forEach(result => {
-
+    
                             var options = {
         
                                 method: "POST",
@@ -119,13 +106,13 @@ module.exports = function (app) {
                                 json: true,
                         
                             };
-
+    
                             request(options, function (error, response, body) {
             
                                 if (error) {
                     
                                     console.log(error)
-
+    
                                     Client.update({ date_processed: DATE_TODAY, send_log: error}, {
                                         where: {
                                             id: result.id
@@ -133,24 +120,23 @@ module.exports = function (app) {
                                     }); 
                     
                                 } else if(response) {
-
                                     console.log(response.body)
 
-                                    // update status of updated client
-                                    Client.update({ processed: "Processed", date_processed: DATE_TODAY, send_log: response.body.message }, {
-                                        where: {
-                                            id: result.id
-                                        }
-                                    });                            
-
+                                    if (response.statusCode == 200)
+                                        Client.destroy({
+                                            where: {
+                                                id: result.id
+                                            }
+                                        });                            
+    
                                 }
-
+    
                             });    
                     
                     });
+    
+                });
 
-                }); 
-                    
                 let results1 = Appointment.findAll({
                         where: {
                             processed: 'Pending'
@@ -159,7 +145,7 @@ module.exports = function (app) {
         
                         
                         results.forEach(result => {
-
+    
                             var options = {
         
                                 method: "POST",
@@ -177,13 +163,13 @@ module.exports = function (app) {
                                 json: true,
                         
                             };
-
+    
                             request(options, function (error, response, body) {
             
                                 if (error) {
                     
                                     console.log(error)
-
+    
                                     Appointment.update({ date_processed: DATE_TODAY, send_log: error }, {
                                         where: {
                                             id: result.id
@@ -191,30 +177,31 @@ module.exports = function (app) {
                                     });  
                     
                                 } else if(response) {
-
+    
                                     console.log(response.body)
-
+    
                                     // update status of updated appointment
-                                    Appointment.update({ processed: "Processed", date_processed: DATE_TODAY, send_log: response.body.message }, {
-                                        where: {
-                                            id: result.id
-                                        }
-                                    });                           
-
+                                    if (response.statusCode == 200)
+                                        Appointment.destroy({ 
+                                            where: {
+                                                id: result.id
+                                            }
+                                        });
+    
                                 }
-
+    
                             }); 
                         
                         });
         
-                    });
+                     });
                         
                 let results2 = ClientOru.findAll({
                     where: {
                         processed: 'Pending'
                     }
                 }).then(function (results) {
-
+    
                     console.log(results)
                     
                     results.forEach(result => {
@@ -235,13 +222,13 @@ module.exports = function (app) {
                             json: true,
                     
                         };
-
+    
                         request(options, function (error, response, body) {
         
                             if (error) {
                 
                                 console.log(error)
-
+    
                                 ClientOru.update({ date_processed: DATE_TODAY, send_log: error}, {
                                     where: {
                                         id: result.id
@@ -249,28 +236,26 @@ module.exports = function (app) {
                                 }); 
                 
                             } else if(response) {
-
+    
                                 console.log(response.body)
-
-                                // update status of updated client
-                                ClientOru.update({ processed: "Processed", date_processed: DATE_TODAY, send_log: response.body.message }, {
-                                    where: {
-                                        id: result.id
-                                    }
-                                });                            
-
+                                if (response.statusCode == 200) 
+                                    ClientOru.destroy({
+                                        where: {
+                                            id: result.id
+                                        }
+                                    });
                             }
-
+    
                         });
                     
                     });
-
+    
                 });  
             
-
-
+    
+    
             });
-
+    
             //if online post incoming requests to receiver
             
             var options = {
@@ -296,20 +281,21 @@ module.exports = function (app) {
             request(options, function (error, response, body) {
             
                 if (error) {
-
+    
                     console.log(error)
-
+                    return res.status(400).send({error})
+    
                 } else if(response.body.response.msg != 'OK') {
-
-
+    
+    
                     if(response.body.response.msg != 'Validation error' ) {
-
+    
                         var s = response.body.response.data
-
+    
                         console.log("im here",s)
-
+    
                         var l = {
-
+    
                             f_name: s.f_name,
                             l_name: s.l_name,
                             clinic_number: s.clinic_number,
@@ -318,15 +304,15 @@ module.exports = function (app) {
                             send_log: response.body.response.msg
                             
                         }
-
-
-
+    
+    
+    
                     } else{
-
+    
                         var s = response.body.response.errors[0].instance;
-
+    
                         var l = {
-
+    
                             f_name: s.f_name,
                             l_name: s.l_name,
                             clinic_number: s.clinic_number,
@@ -335,14 +321,14 @@ module.exports = function (app) {
                             send_log: response.body.response.errors[0].message
                             
                         }
-
+    
                     }
-
+    
                     
                     console.log("data",l)
-
+    
                     async function save() {
-
+    
                         await Logs.create(l)
                         .then(async function (response) {
                             console.log("here 1",response)
@@ -353,28 +339,29 @@ module.exports = function (app) {
                     }
                     
                     save();
-
-
-                }   
+    
+    
+                }
+                return res.status(response.statusCode).send(response.body)
         
             });
             
         
         }).catch(function(error){
-
+    
             console.log("No internet, saving data locally", error);
-
+    
             //if offline push data from request to local db
             var DATE_TODAY = moment(new Date()).format("YYYY-MM-DD");
-
+    
             var message_type = hl7_message.MESSAGE_HEADER.MESSAGE_TYPE;
             var SENDING_APPLICATION = hl7_message.MESSAGE_HEADER.SENDING_APPLICATION;
             var MESSAGE_DATETIME = hl7_message.MESSAGE_HEADER.MESSAGE_DATETIME;
-
+    
             if (SENDING_APPLICATION === 'KENYAEMR' || SENDING_APPLICATION === 'ADT') {
-
+    
                 if (message_type == "ADT^A04") {
-
+    
                     var GODS_NUMBER = hl7_message.PATIENT_IDENTIFICATION.EXTERNAL_PATIENT_ID.ID;
                     var CCC_NUMBER;
                     var PATIENT_CLINIC_NUMBER;
@@ -396,15 +383,15 @@ module.exports = function (app) {
                     var VILLAGE = hl7_message.PATIENT_IDENTIFICATION.PATIENT_ADDRESS.PHYSICAL_ADDRESS.VILLAGE;
                     var ART_DATE;
                     var PROCESSED = 'Pending';  
-
+    
                     var result = get_json(hl7_message);
-
+    
                     console.log(result);
-
+    
                     for (var i = 0; i < result.length; i++) {
                         var key = result[i].key;
                         var value = result[i].value;
-
+    
                         if (key == "DATE_OF_BIRTH") {
                             var DoB = DATE_OF_BIRTH;
         
@@ -458,13 +445,13 @@ module.exports = function (app) {
                                 CCC_NUMBER = result[i].value;
                             }
                         }
-
+    
                         if (key == "ID") {
                             if (result[i + 1].value == "PATIENT_CLINIC_NUMBER") {
                                 PATIENT_CLINIC_NUMBER = result[i].value;
                             }
                         }
-
+    
                         if(SENDING_APPLICATION == "ADT") {
                             if(key == "OBSERVATION_IDENTIFIER") {
                                 if (result[i].value == "ART_START") {
@@ -482,28 +469,34 @@ module.exports = function (app) {
                                 
                         }
                     }
-
+    
                     var enroll_year = ENROLLMENT_DATE.substring(0, 4);
                     var enroll_month = ENROLLMENT_DATE.substring(4, 6);
                     var enroll_day = ENROLLMENT_DATE.substring(6, 8);
                     var new_enroll_date = enroll_year + "-" + enroll_month + "-" + enroll_day;
-
+    
                     console.log("date", ART_DATE)
-
+    
                     if(ART_DATE == "" || ART_DATE == undefined ) {
-
+    
                         var new_art_date = null;
-
+    
                     } else {
-
+    
                         var art_year = ART_DATE.substring(0, 4);
                         var art_month = ART_DATE.substring(4, 6);
                         var art_day = ART_DATE.substring(6, 8);
                         var new_art_date = art_year + "-" + art_month + "-" + art_day;
-
+    
                     }
-
-                    client = {
+    
+                    if (CCC_NUMBER.length != 10 || isNaN(CCC_NUMBER)) {
+                        response = `Invalid CCC Number: ${CCC_NUMBER}`;
+                        console.log(response);
+                        return;
+                    }
+    
+                    let client = {
                         f_name: FIRST_NAME,
                         m_name: MIDDLE_NAME,
                         l_name: LAST_NAME,
@@ -529,32 +522,34 @@ module.exports = function (app) {
                         message_type: MESSAGE_TYPE,
                         processed: PROCESSED
                     }
-
+    
                     console.log(client)
-
+    
                     async function saveData() {
-
+    
                         await Client.create(client)
-                        .then(function (res) {
-                            message = "OK";
-                            response = "Client saved on local db";
-                            console.log(res)
-
-                            return res;
+                        .then(function (response) {
+                            let message = "OK";
+                            let resp = "Client saved on local db";
+                            console.log(response)
+    
+                            return res.json({
+                                message: message,
+                                data: [resp, response]
+                                });
                         })
                         .catch(function (err) {
-                            code = 500;
-                            response = err.message;
-                            console.log(error)
-
-                            return response;
+                            let code = 500;
+                            let response = err.message;
+    
+                            return res.status(code).send(response);
                         })
-
+    
                     }
-
+    
                     saveData();
-
-
+    
+    
                 } else if (message_type == "SIU^S12") {
                     var GODS_NUMBER = hl7_message.PATIENT_IDENTIFICATION.EXTERNAL_PATIENT_ID.ID;
                     var SENDING_FACILITY;
@@ -629,18 +624,18 @@ module.exports = function (app) {
                     if (!APPOINTMENT_TYPE) {
                         APPOINTMENT_TYPE = 1;
                     }
-
+    
                     if (APPOINTMENT_LOCATION == "PHARMACY" || APPOINTMENT_REASON == "REGIMEN REFILL") {
                         APPOINTMENT_TYPE = 1;
                     } else {
                         APPOINTMENT_TYPE = 2;
                     }
-
+    
                     var APP_STATUS = "Booked";
                     var ACTIVE_APP = "1";
                     var SENDING_APPLICATION = hl7_message.MESSAGE_HEADER.SENDING_APPLICATION;
                     var SENDING_FACILITY = hl7_message.MESSAGE_HEADER.SENDING_FACILITY;
-
+    
                     let appointment = {
                         appntmnt_date: APPOINTMENT_DATE,
                         app_type_1: APPOINTMENT_TYPE,
@@ -656,15 +651,15 @@ module.exports = function (app) {
                         created_at: VISIT_DATE,
                         processed: PROCESSED
                     }
-
+    
                     async function save() {
-
+    
                         await Appointment.create(appointment)
                         .then(async function (data) {
                         console.log(data)
                         message = "OK";
                         response = "Appointment saved in local db"
-
+    
                         return response;
                         
                         })
@@ -672,18 +667,18 @@ module.exports = function (app) {
                             code = 500;
                             response = err.message;
                             console.log(error)
-
+    
                             return response
                         })
-
-
+    
+    
                     }
-
+    
                     save();
-
-                        
+    
+                         
                 } else if(message_type === "ORU^R01") {
-
+    
                     var GODS_NUMBER = hl7_message.PATIENT_IDENTIFICATION.EXTERNAL_PATIENT_ID.ID;
                     var CCC_NUMBER;
                     var FIRST_NAME = hl7_message.PATIENT_IDENTIFICATION.PATIENT_NAME.FIRST_NAME;
@@ -695,15 +690,15 @@ module.exports = function (app) {
                     var OBSERVATION_DATETIME;
                     var MESSAGE_TYPE = hl7_message.MESSAGE_HEADER.MESSAGE_TYPE;
                     var PROCESSED = 'Pending';
-
+    
                     var result = get_json(hl7_message);
-
+    
                     console.log(result)
-
+    
                     for (var i = 0; i < result.length; i++) {
                         var key = result[i].key;                
                         var value = result[i].value;
-
+    
                         if (key == "DEATH_DATE") {
                             DEATH_DATE = result[i].value;
                         } else if (key == "DEATH_INDICATOR") {
@@ -721,20 +716,19 @@ module.exports = function (app) {
                         }
                 
                     }      
-
+    
                     if (CCC_NUMBER.length != 10 || isNaN(CCC_NUMBER)) {
                         response = `Invalid CCC Number: ${CCC_NUMBER}`;
                         console.log(response);
-                        return;
                     }
-
-
+    
+    
                     if(OBSERVATION_VALUE === "DEAD") {
                         var death_ind = "Deceased"
                     } else {
                         var death_ind = "Active"
                     }
-
+    
                     var observation_year = OBSERVATION_DATETIME.substring(0, 4);
                     var observation_month = OBSERVATION_DATETIME.substring(4, 6);
                     var observation_day = OBSERVATION_DATETIME.substring(6, 8);
@@ -742,60 +736,62 @@ module.exports = function (app) {
                     var observation_minute = OBSERVATION_DATETIME.substring(10, 12);
                     var observation_second = OBSERVATION_DATETIME.substring(12, 14);
                     var new_observation_date = observation_year + "-" + observation_month + "-" + observation_day + " " + observation_hour + ":" + observation_minute + ":" + observation_second;
-
+    
                     if(OBSERVATION_VALUE == "TRANSFER_OUT") {
-
+    
                         var new_value = "Transfer Out";
-
+    
                     } else if(OBSERVATION_VALUE == "DIED") {
-
+    
                         var new_value = "Deceased";
-
+    
                     } else if(OBSERVATION_VALUE == "LOST_TO_FOLLOWUP") {
-
+    
                         var new_value = "LTFU";
-
+    
                     }   
-
-                    client_oru = {
-
-                    f_name: FIRST_NAME,
-                    m_name: MIDDLE_NAME,
-                    l_name: LAST_NAME,
-                    clinic_number: CCC_NUMBER,
-                    message_type: MESSAGE_TYPE,
-                    mfl_code: SENDING_FACILITY,
-                    sending_application: SENDING_APPLICATION,
-                    observation_value: new_value,
-                    new_observation_datetime: new_observation_date,
-                    death_status: death_ind,
-                    processed: PROCESSED
-
+    
+                    observation = {
+    
+                       f_name: FIRST_NAME,
+                       m_name: MIDDLE_NAME,
+                       l_name: LAST_NAME,
+                       clinic_number: CCC_NUMBER,
+                       message_type: MESSAGE_TYPE,
+                       mfl_code: SENDING_FACILITY,
+                       sending_application: SENDING_APPLICATION,
+                       observation_value: new_value,
+                       new_observation_datetime: new_observation_date,
+                       death_status: death_ind,
+                       processed: PROCESSED
+    
                     } 
                     
+                    console.log(client)
+    
                     async function save() {
-
+    
                         await ClientOru.create(client_oru)
                         .then(function (model) {
                             message = "OK";
                             response = "Client Observation saved on local db";
-
+    
                             return response;
                         })
                         .catch(function (error) {
                             code = 500;
                             response = err.message;
                             console.log(error)
-
+    
                             return response;
                         })
                     }
                     
                     save();
-
-
+    
+    
                 } else if(message_type == "ADT^A08") {
-
+    
                     var GODS_NUMBER = hl7_message.PATIENT_IDENTIFICATION.EXTERNAL_PATIENT_ID.ID;
                     var CCC_NUMBER;
                     var PATIENT_CLINIC_NUMBER;
@@ -817,15 +813,15 @@ module.exports = function (app) {
                     var VILLAGE = hl7_message.PATIENT_IDENTIFICATION.PATIENT_ADDRESS.PHYSICAL_ADDRESS.VILLAGE;
                     var ART_DATE;
                     var PROCESSED = 'Pending';
-
+    
                     var result = get_json(hl7_message);
-
+    
                     console.log(result);
-
+    
                     for (var i = 0; i < result.length; i++) {
                         var key = result[i].key;
                         var value = result[i].value;
-
+    
                         if (key == "DATE_OF_BIRTH") {
                             var DoB = DATE_OF_BIRTH;
         
@@ -879,13 +875,13 @@ module.exports = function (app) {
                                 CCC_NUMBER = result[i].value;
                             }
                         }
-
+    
                         if (key == "ID") {
                             if (result[i + 1].value == "PATIENT_CLINIC_NUMBER") {
                                 PATIENT_CLINIC_NUMBER = result[i].value;
                             }
                         }
-
+    
                         if(SENDING_APPLICATION == "ADT") {
                             if(key == "OBSERVATION_IDENTIFIER") {
                                 if (result[i].value == "ART_START") {
@@ -902,26 +898,32 @@ module.exports = function (app) {
                                 
                         }
                     }
-
+    
                     var enroll_year = ENROLLMENT_DATE.substring(0, 4);
                     var enroll_month = ENROLLMENT_DATE.substring(4, 6);
                     var enroll_day = ENROLLMENT_DATE.substring(6, 8);
                     var new_enroll_date = enroll_year + "-" + enroll_month + "-" + enroll_day;
-
+    
                     if(ART_DATE == "" || ART_DATE == undefined ) {
-
+    
                         var new_art_date = null;
-
+    
                     } else {
-
+    
                         var art_year = ART_DATE.substring(0, 4);
                         var art_month = ART_DATE.substring(4, 6);
                         var art_day = ART_DATE.substring(6, 8);
                         var new_art_date = art_year + "-" + art_month + "-" + art_day;
-
+    
                     }
-
-                    client = {
+    
+                    // if (CCC_NUMBER.length != 10 || isNaN(CCC_NUMBER)) {
+                    //     response = `Invalid CCC Number: ${CCC_NUMBER}`;
+                    //     console.log(response);
+                    //     return;
+                    // }
+    
+                    let client = {
                         f_name: FIRST_NAME,
                         m_name: MIDDLE_NAME,
                         l_name: LAST_NAME,
@@ -947,42 +949,43 @@ module.exports = function (app) {
                         message_type: MESSAGE_TYPE,
                         processed: PROCESSED
                     }
-
+    
                     console.log(client)
-
+    
                     async function save() {
-
+    
                         await Client.create(client)
                         .then(function (response) {
                             message = "OK";
                             response = "Client saved on local db";
                             console.log(response)
-
+    
                             return response;
                         })
                         .catch(function (error) {
                             code = 500;
                             response = error.message;
                             console.log(error)
-
+    
                             return response;
                         })
                     }
                     
                     save();
-
+    
                 }    
-
-
+    
+    
             } else {
-
+    
                 console.log("IQCare Message, skip")
             }	
-
+    
         });
 
-              
+        
     }); 
+
     
 	//Tell our app to listen on port 3000
 

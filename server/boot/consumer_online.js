@@ -297,6 +297,7 @@ module.exports = function (app) {
                 if (error) {
     
                     console.log(error)
+                    return res.status(400).send({error})
     
                 } else if(response.body.response.msg != 'OK') {
     
@@ -354,7 +355,8 @@ module.exports = function (app) {
                     save();
     
     
-                }   
+                }
+                return res.status(response.statusCode).send(response.body)
         
             });
             
@@ -508,7 +510,7 @@ module.exports = function (app) {
                         return;
                     }
     
-                    client = {
+                    let client = {
                         f_name: FIRST_NAME,
                         m_name: MIDDLE_NAME,
                         l_name: LAST_NAME,
@@ -540,19 +542,21 @@ module.exports = function (app) {
                     async function saveData() {
     
                         await Client.create(client)
-                        .then(function (res) {
-                            message = "OK";
-                            response = "Client saved on local db";
-                            console.log(res)
+                        .then(function (response) {
+                            let message = "OK";
+                            let resp = "Client saved on local db";
+                            console.log(response)
     
-                            return res;
+                            return res.json({
+                                message: message,
+                                data: [resp, response]
+                                });
                         })
                         .catch(function (err) {
-                            code = 500;
-                            response = err.message;
-                            console.log(error)
+                            let code = 500;
+                            let response = err.message;
     
-                            return response;
+                            return res.status(code).send(response);
                         })
     
                     }

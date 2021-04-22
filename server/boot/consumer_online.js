@@ -64,49 +64,165 @@ module.exports = function (app) {
 		var hl7_message = (req.body);
 
 
-    internetAvailable().then(function(){
-        console.log("Internet available");
+        internetAvailable().then(function(){
+            console.log("Internet available");
 
-        //if online run cron job to post from local db to sync endpoints
+            //if online run cron job to post from local db to sync endpoints
 
-        var send_results_job = schedule.scheduleJob("10 * * * * * ", function (fireDate) {
+            var send_results_job = schedule.scheduleJob("10 * * * * * ", function (fireDate) {
 
-            // If internet push data from local to live
+                // If internet push data from local to live
 
-            var DATE_TODAY = moment(new Date()).format("YYYY-MM-DD H:m:s");
+                var DATE_TODAY = moment(new Date()).format("YYYY-MM-DD H:m:s");
 
-                console.log(DATE_TODAY);
+                    console.log(DATE_TODAY);
 
-                console.log(
+                    console.log(
 
-                "This sync is supposed to run at => " +
+                    "This sync is supposed to run at => " +
 
-                    DATE_TODAY +
+                        DATE_TODAY +
 
-                    "And FireDate => " +
+                        "And FireDate => " +
 
-                    fireDate +
+                        fireDate +
 
-                    " "
+                        " "
 
-            );
-    
+                );
         
             
-
-            let results = Client.findAll({
-                where: {
-                    processed: 'Pending'
-                }
-                }).then(function (results) {
                 
-                    results.forEach(result => {
 
+                let results = Client.findAll({
+                    where: {
+                        processed: 'Pending'
+                    }
+                    }).then(function (results) {
+                    
+                        results.forEach(result => {
+
+                            var options = {
+        
+                                method: "POST",
+                        
+                                url: "https://il.mhealthkenya.co.ke/hl7-sync-client",
+                        
+                                headers: {
+                        
+                                    "Content-Type": "application/json",
+                        
+                                },
+                        
+                                body:result,
+                        
+                                json: true,
+                        
+                            };
+
+                            request(options, function (error, response, body) {
+            
+                                if (error) {
+                    
+                                    console.log(error)
+
+                                    Client.update({ date_processed: DATE_TODAY, send_log: error}, {
+                                        where: {
+                                            id: result.id
+                                        }
+                                    }); 
+                    
+                                } else if(response) {
+
+                                    console.log(response.body)
+
+                                    // update status of updated client
+                                    Client.update({ processed: "Processed", date_processed: DATE_TODAY, send_log: response.body.message }, {
+                                        where: {
+                                            id: result.id
+                                        }
+                                    });                            
+
+                                }
+
+                            });    
+                    
+                    });
+
+                }); 
+                    
+                let results1 = Appointment.findAll({
+                        where: {
+                            processed: 'Pending'
+                        }
+                    }).then(function (results) {
+        
+                        
+                        results.forEach(result => {
+
+                            var options = {
+        
+                                method: "POST",
+                        
+                                url: "https://il.mhealthkenya.co.ke/hl7-sync-appointment",
+                        
+                                headers: {
+                        
+                                    "Content-Type": "application/json",
+                        
+                                },
+                        
+                                body:result,
+                        
+                                json: true,
+                        
+                            };
+
+                            request(options, function (error, response, body) {
+            
+                                if (error) {
+                    
+                                    console.log(error)
+
+                                    Appointment.update({ date_processed: DATE_TODAY, send_log: error }, {
+                                        where: {
+                                            id: result.id
+                                        }
+                                    });  
+                    
+                                } else if(response) {
+
+                                    console.log(response.body)
+
+                                    // update status of updated appointment
+                                    Appointment.update({ processed: "Processed", date_processed: DATE_TODAY, send_log: response.body.message }, {
+                                        where: {
+                                            id: result.id
+                                        }
+                                    });                           
+
+                                }
+
+                            }); 
+                        
+                        });
+        
+                    });
+                        
+                let results2 = ClientOru.findAll({
+                    where: {
+                        processed: 'Pending'
+                    }
+                }).then(function (results) {
+
+                    console.log(results)
+                    
+                    results.forEach(result => {
                         var options = {
-    
+        
                             method: "POST",
                     
-                            url: "https://il.mhealthkenya.co.ke/hl7-sync-client",
+                            url: "https://il.mhealthkenya.co.ke/hl7-sync-observation",
                     
                             headers: {
                     
@@ -126,7 +242,7 @@ module.exports = function (app) {
                 
                                 console.log(error)
 
-                                Client.update({ date_processed: DATE_TODAY, send_log: error}, {
+                                ClientOru.update({ date_processed: DATE_TODAY, send_log: error}, {
                                     where: {
                                         id: result.id
                                     }
@@ -136,8 +252,8 @@ module.exports = function (app) {
 
                                 console.log(response.body)
 
-                                   // update status of updated client
-                                Client.update({ processed: "Processed", date_processed: DATE_TODAY, send_log: response.body.message }, {
+                                // update status of updated client
+                                ClientOru.update({ processed: "Processed", date_processed: DATE_TODAY, send_log: response.body.message }, {
                                     where: {
                                         id: result.id
                                     }
@@ -145,841 +261,725 @@ module.exports = function (app) {
 
                             }
 
-                        });    
-                
-                });
-
-            }); 
-                
-            let results1 = Appointment.findAll({
-                    where: {
-                        processed: 'Pending'
-                    }
-                }).then(function (results) {
-    
-                    
-                    results.forEach(result => {
-
-                        var options = {
-    
-                            method: "POST",
-                    
-                            url: "https://il.mhealthkenya.co.ke/hl7-sync-appointment",
-                    
-                            headers: {
-                    
-                                "Content-Type": "application/json",
-                    
-                            },
-                    
-                            body:result,
-                    
-                            json: true,
-                    
-                        };
-
-                        request(options, function (error, response, body) {
-        
-                            if (error) {
-                
-                                console.log(error)
-
-                                Appointment.update({ date_processed: DATE_TODAY, send_log: error }, {
-                                    where: {
-                                        id: result.id
-                                    }
-                                });  
-                
-                            } else if(response) {
-
-                                console.log(response.body)
-
-                                // update status of updated appointment
-                                Appointment.update({ processed: "Processed", date_processed: DATE_TODAY, send_log: response.body.message }, {
-                                    where: {
-                                        id: result.id
-                                    }
-                                });                           
-
-                            }
-
-                        }); 
+                        });
                     
                     });
-    
-                 });
-                    
-            let results2 = ClientOru.findAll({
-                where: {
-                    processed: 'Pending'
-                }
-            }).then(function (results) {
 
-                console.log(results)
-                
-                results.forEach(result => {
-                    var options = {
-    
-                        method: "POST",
-                
-                        url: "https://il.mhealthkenya.co.ke/hl7-sync-observation",
-                
-                        headers: {
-                
-                            "Content-Type": "application/json",
-                
-                        },
-                
-                        body:result,
-                
-                        json: true,
-                
-                    };
-
-                    request(options, function (error, response, body) {
-    
-                        if (error) {
+                });  
             
-                            console.log(error)
 
-                            ClientOru.update({ date_processed: DATE_TODAY, send_log: error}, {
-                                where: {
-                                    id: result.id
-                                }
-                            }); 
+
+            });
+
+            //if online post incoming requests to receiver
             
-                        } else if(response) {
-
-                            console.log(response.body)
-
-                               // update status of updated client
-                            ClientOru.update({ processed: "Processed", date_processed: DATE_TODAY, send_log: response.body.message }, {
-                                where: {
-                                    id: result.id
-                                }
-                            });                            
-
-                        }
-
-                    });
-                
-                });
-
-            });  
+            var options = {
         
-
-
-        });
-
-        //if online post incoming requests to receiver
+                method: "POST",
         
-        var options = {
-    
-            method: "POST",
-    
-            url: "https://il.mhealthkenya.co.ke/hl7_message",
-    
-            headers: {
-    
-                "Content-Type": "application/json",
-    
-            },
-    
-            body:hl7_message,
-    
-            json: true,
-    
-        };
-    
-    
-    
-        request(options, function (error, response, body) {
+                url: "https://il.mhealthkenya.co.ke/hl7_message",
         
-            if (error) {
-
-                console.log(error)
-
-            } else if(response.body.response.msg != 'OK') {
-
-
-                if(response.body.response.msg != 'Validation error' ) {
-
-                    var s = response.body.response.data
-
-                    console.log("im here",s)
-
-                    var l = {
-
-                        f_name: s.f_name,
-                        l_name: s.l_name,
-                        clinic_number: s.clinic_number,
-                        file_no: s.file_no,
-                        sending_application: s.sending_application,
-                        send_log: response.body.response.msg
-                        
-                    }
-
-
-
-                } else{
-
-                    var s = response.body.response.errors[0].instance;
-
-                    var l = {
-
-                        f_name: s.f_name,
-                        l_name: s.l_name,
-                        clinic_number: s.clinic_number,
-                        file_no: s.file_no,
-                        sending_application: s.sending_application,
-                        send_log: response.body.response.errors[0].message
-                        
-                    }
-
-                }
-
-                
-                console.log("data",l)
-
-                async function save() {
-
-                    await Logs.create(l)
-                    .then(async function (response) {
-                        console.log("here 1",response)
-                    })
-                    .catch(function (error) {
-                        console.log("here 2", error)
-                    })
-                }
-                
-                save();
-
-
-            }   
-    
-        });
+                headers: {
         
-    
-    }).catch(function(error){
+                    "Content-Type": "application/json",
+        
+                },
+        
+                body:hl7_message,
+        
+                json: true,
+        
+            };
+        
+        
+        
+            request(options, function (error, response, body) {
+            
+                if (error) {
 
-        console.log("No internet, saving data locally", error);
+                    console.log(error)
 
-        //if offline push data from request to local db
-        var DATE_TODAY = moment(new Date()).format("YYYY-MM-DD");
+                } else if(response.body.response.msg != 'OK') {
 
-        var message_type = hl7_message.MESSAGE_HEADER.MESSAGE_TYPE;
-        var SENDING_APPLICATION = hl7_message.MESSAGE_HEADER.SENDING_APPLICATION;
-        var MESSAGE_DATETIME = hl7_message.MESSAGE_HEADER.MESSAGE_DATETIME;
 
-        if (SENDING_APPLICATION === 'KENYAEMR' || SENDING_APPLICATION === 'ADT') {
+                    if(response.body.response.msg != 'Validation error' ) {
 
-            if (message_type == "ADT^A04") {
+                        var s = response.body.response.data
 
-                var GODS_NUMBER = hl7_message.PATIENT_IDENTIFICATION.EXTERNAL_PATIENT_ID.ID;
-                var CCC_NUMBER;
-                var PATIENT_CLINIC_NUMBER;
-                var SENDING_FACILITY = hl7_message.MESSAGE_HEADER.SENDING_FACILITY;
-                var FIRST_NAME = hl7_message.PATIENT_IDENTIFICATION.PATIENT_NAME.FIRST_NAME;
-                var MIDDLE_NAME = hl7_message.PATIENT_IDENTIFICATION.PATIENT_NAME.MIDDLE_NAME;
-                var LAST_NAME = hl7_message.PATIENT_IDENTIFICATION.PATIENT_NAME.LAST_NAME;
-                var DATE_OF_BIRTH = hl7_message.PATIENT_IDENTIFICATION.DATE_OF_BIRTH;
-                var SEX;
-                var PHONE_NUMBER;
-                var MARITAL_STATUS;
-                var PATIENT_SOURCE = hl7_message.PATIENT_VISIT.PATIENT_SOURCE;
-                var ENROLLMENT_DATE = hl7_message.PATIENT_VISIT.HIV_CARE_ENROLLMENT_DATE;
-                var PATIENT_TYPE = hl7_message.PATIENT_VISIT.PATIENT_TYPE;
-                var GROUP_ID;
-                var COUNTY = hl7_message.PATIENT_IDENTIFICATION.PATIENT_ADDRESS.PHYSICAL_ADDRESS.COUNTY;
-                var SUB_COUNTY = hl7_message.PATIENT_IDENTIFICATION.PATIENT_ADDRESS.PHYSICAL_ADDRESS.SUB_COUNTY;
-                var WARD = hl7_message.PATIENT_IDENTIFICATION.PATIENT_ADDRESS.PHYSICAL_ADDRESS.WARD;
-                var VILLAGE = hl7_message.PATIENT_IDENTIFICATION.PATIENT_ADDRESS.PHYSICAL_ADDRESS.VILLAGE;
-                var ART_DATE;
-                var PROCESSED = 'Pending';  
+                        console.log("im here",s)
 
-                var result = get_json(hl7_message);
+                        var l = {
 
-                console.log(result);
-
-                for (var i = 0; i < result.length; i++) {
-                    var key = result[i].key;
-                    var value = result[i].value;
-
-                    if (key == "DATE_OF_BIRTH") {
-                        var DoB = DATE_OF_BIRTH;
-    
-                        var year = DoB.substring(0, 4);
-                        var month = DoB.substring(4, 6);
-                        var day = DoB.substring(6, 8);
-    
-                        var today = DATE_TODAY;
-    
-                        var new_date = year + "-" + month + "-" + day;
-                        var date_diff = moment(today).diff(
-                            moment(new_date).format("YYYY-MM-DD"),
-                            "days"
-                        );
-    
-                        if (date_diff >= 5475 && date_diff <= 6935) {
-                            GROUP_ID = "2";
-                        }
-                        if (date_diff >= 7300) {
-                            GROUP_ID = "1";
-                        }
-                        if (date_diff <= 5110) {
-                            GROUP_ID = "6";
-                        }
-                    } else if (key == "SEX") {
-                        if (result[i].value == "F") {
-                            SEX = "1";
-                        } else {
-                            SEX = "2";
-                        }
-                    } else if (key == "PHONE_NUMBER") {
-                        PHONE_NUMBER = result[i].value;
-                    } else if (key == "MARITAL_STATUS") {
-                        if (result[i].value === "") {
-                            MARITAL_STATUS = "1";
-                        }
-                        if (result[i].value == "D") {
-                            MARITAL_STATUS = "3";
-                        } else if (result[i].value == "M") {
-                            MARITAL_STATUS = "2";
-                        } else if (result[i].value == "S") {
-                            MARITAL_STATUS = "1";
-                        } else if (result[i].value == "W") {
-                            MARITAL_STATUS = "4";
-                        } else if (result[i].value == "C") {
-                            MARITAL_STATUS = "5";
-                        }
-                    }
-                    if (key == "ID") {
-                        if (result[i + 1].value == "CCC_NUMBER") {
-                            CCC_NUMBER = result[i].value;
-                        }
-                    }
-
-                    if (key == "ID") {
-                        if (result[i + 1].value == "PATIENT_CLINIC_NUMBER") {
-                            PATIENT_CLINIC_NUMBER = result[i].value;
-                        }
-                    }
-
-                    if(SENDING_APPLICATION == "ADT") {
-                        if(key == "OBSERVATION_IDENTIFIER") {
-                            if (result[i].value == "ART_START") {
-                                ART_DATE = result[i+3].value;
-                            }  
-                        } 
-    
-                    } else if(SENDING_APPLICATION === "KENYAEMR") {
-                        if(key == "OBSERVATION_DATETIME") {
-                            if (result[i + 5].value == "CURRENT_REGIMEN") {
-                                ART_DATE = result[i].value;
-                            }  
-                        } 
-    
+                            f_name: s.f_name,
+                            l_name: s.l_name,
+                            clinic_number: s.clinic_number,
+                            file_no: s.file_no,
+                            sending_application: s.sending_application,
+                            send_log: response.body.response.msg
                             
+                        }
+
+
+
+                    } else{
+
+                        var s = response.body.response.errors[0].instance;
+
+                        var l = {
+
+                            f_name: s.f_name,
+                            l_name: s.l_name,
+                            clinic_number: s.clinic_number,
+                            file_no: s.file_no,
+                            sending_application: s.sending_application,
+                            send_log: response.body.response.errors[0].message
+                            
+                        }
+
                     }
-                }
 
-                var enroll_year = ENROLLMENT_DATE.substring(0, 4);
-                var enroll_month = ENROLLMENT_DATE.substring(4, 6);
-                var enroll_day = ENROLLMENT_DATE.substring(6, 8);
-                var new_enroll_date = enroll_year + "-" + enroll_month + "-" + enroll_day;
+                    
+                    console.log("data",l)
 
-                console.log("date", ART_DATE)
+                    async function save() {
 
-                if(ART_DATE == "" || ART_DATE == undefined ) {
-
-                    var new_art_date = null;
-
-                } else {
-
-                    var art_year = ART_DATE.substring(0, 4);
-                    var art_month = ART_DATE.substring(4, 6);
-                    var art_day = ART_DATE.substring(6, 8);
-                    var new_art_date = art_year + "-" + art_month + "-" + art_day;
-
-                }
-
-                client = {
-                    f_name: FIRST_NAME,
-                    m_name: MIDDLE_NAME,
-                    l_name: LAST_NAME,
-                    dob: new_date,
-                    clinic_number: CCC_NUMBER,
-                    patient_clinic_number: PATIENT_CLINIC_NUMBER,
-                    mfl_code: parseInt(SENDING_FACILITY),
-                    gender: parseInt(SEX),
-                    marital: MARITAL_STATUS,
-                    phone_no: PHONE_NUMBER,
-                    gods_number: GODS_NUMBER,
-                    group_id: parseInt(GROUP_ID),
-                    sending_application: SENDING_APPLICATION,
-                    db_source: SENDING_APPLICATION,
-                    patient_source: PATIENT_SOURCE,
-                    enrollment_date: new_enroll_date,
-                    art_date: new_art_date,
-                    client_type: PATIENT_TYPE,
-                    locator_county: COUNTY,
-                    locator_sub_county: SUB_COUNTY,
-                    locator_ward: WARD,
-                    locator_village: VILLAGE,
-                    message_type: MESSAGE_TYPE,
-                    processed: PROCESSED
-                }
-
-                console.log(client)
-
-                async function saveData() {
-
-                    await Client.create(client)
-                    .then(function (res) {
-                        message = "OK";
-                        response = "Client saved on local db";
-                        console.log(res)
-
-                        return res;
-                    })
-                    .catch(function (err) {
-                        code = 500;
-                        response = err.message;
-                        console.log(error)
-
-                        return response;
-                    })
-
-                }
-
-                saveData();
-
-
-            } else if (message_type == "SIU^S12") {
-                var GODS_NUMBER = hl7_message.PATIENT_IDENTIFICATION.EXTERNAL_PATIENT_ID.ID;
-                var SENDING_FACILITY;
-    
-                var CCC_NUMBER;
-                var APPOINTMENT_REASON;
-                var APPOINTMENT_TYPE;
-                var APPOINTMENT_DATE;
-                var APPOINTMENT_PLACING_ENTITY;
-                var PLACER_APPOINTMENT_NUMBER;
-                var APPOINTMENT_LOCATION;
-                //var ACTION_CODE;
-                var APPOINTMENT_NOTE;
-                var APPOINTMENT_HONORED;
-                var VISIT_DATE;
-                var PROCESSED = 'Pending';
-    
-                var result = get_json(hl7_message);
-    
-                for (var i = 0; i < result.length; i++) {
-                    var key = result[i].key;
-                    var key_value = result[i].value;
-    
-                    if (key == "NUMBER") {
-                        PLACER_APPOINTMENT_NUMBER = result[i].value;
-                    } else if (key == "GODS_NUMBER") {
-                        GODS_NUMBER = result[i].value;
-                    } else if (key == "APPOINTMENT_REASON") {
-                        APPOINTMENT_REASON = result[i].value;
-                    } else if (key == "APPOINTMENT_TYPE") {
-                        APPOINTMENT_TYPE = result[i].value;
-                    } else if (key == "VISIT_DATE") {
-                        VISIT_DATE = result[i].value;
-                    } else if (key == "APPOINTMENT_LOCATION") {
-                        APPOINTMENT_LOCATION = result[i].value;
-                    } else if (key == "APPINTMENT_HONORED") {
-                        APPOINTMENT_HONORED = result[i].value;
-                    } else if (key == "APPOINTMENT_NOTE") {
-                        APPOINTMENT_NOTE = result[i].value;
-                    } else if (key == "ACTION_CODE") {
-                        ACTION_CODE = result[i].value;
-                    } else if (key == "APPOINTMENT_PLACING_ENTITY") {
-                        APPOINTMENT_PLACING_ENTITY = result[i].value;
-                    } else if (key == "APPOINTMENT_DATE") {
-                        APPOINTMENT_DATE = result[i].value;
-                        APPOINTMENT_DATE = APPOINTMENT_DATE;
-    
-                        var year = APPOINTMENT_DATE.substring(0, 4);
-                        var month = APPOINTMENT_DATE.substring(4, 6);
-                        var day = APPOINTMENT_DATE.substring(6, 8);
-    
-                        var app_date = year + "-" + month + "-" + day;
-    
-                        var current_date = moment(new Date());
-                        var today = current_date.format("YYYY-MM-DD");
-    
-                        var BirthDate = moment(app_date);
-                        APPOINTMENT_DATE = BirthDate.format("YYYY-MM-DD");
+                        await Logs.create(l)
+                        .then(async function (response) {
+                            console.log("here 1",response)
+                        })
+                        .catch(function (error) {
+                            console.log("here 2", error)
+                        })
                     }
                     
-                    if (key == "ID") {
-                        if (result[i + 1].value == "CCC_NUMBER") {
-                            CCC_NUMBER = result[i].value;
-                        }
-                    }
-                }
-    
-                if (CCC_NUMBER.length != 10 || isNaN(CCC_NUMBER)) {
-                    console.log("Invalid CCC NUMBER");
-                }
-    
-                if (!APPOINTMENT_TYPE) {
-                    APPOINTMENT_TYPE = 1;
-                }
+                    save();
 
-                if (APPOINTMENT_LOCATION == "PHARMACY" || APPOINTMENT_REASON == "REGIMEN REFILL") {
-                    APPOINTMENT_TYPE = 1;
-                } else {
-                    APPOINTMENT_TYPE = 2;
-                }
-
-                var APP_STATUS = "Booked";
-                var ACTIVE_APP = "1";
-                var SENDING_APPLICATION = hl7_message.MESSAGE_HEADER.SENDING_APPLICATION;
-                var SENDING_FACILITY = hl7_message.MESSAGE_HEADER.SENDING_FACILITY;
-
-                let appointment = {
-                    appntmnt_date: APPOINTMENT_DATE,
-                    app_type_1: APPOINTMENT_TYPE,
-                    clinic_number: CCC_NUMBER,
-                    message_type: MESSAGE_TYPE,
-                    appointment_reason: APPOINTMENT_REASON,
-                    app_status: APP_STATUS,
-                    db_source: SENDING_APPLICATION,
-                    active_app: ACTIVE_APP,
-                    appointment_location: APPOINTMENT_LOCATION,
-                    reason: APPOINTMENT_NOTE,
-                    placer_appointment_number: PLACER_APPOINTMENT_NUMBER,
-                    created_at: VISIT_DATE,
-                    processed: PROCESSED
-                }
-
-                async function save() {
-
-                    await Appointment.create(appointment)
-                    .then(async function (data) {
-                    console.log(data)
-                    message = "OK";
-                    response = "Appointment saved in local db"
-
-                    return response;
-                    
-                    })
-                    .catch(function (error) {
-                        code = 500;
-                        response = err.message;
-                        console.log(error)
-
-                        return response
-                    })
-
-
-                }
-
-                save();
-
-                     
-            } else if(message_type === "ORU^R01") {
-
-                var GODS_NUMBER = hl7_message.PATIENT_IDENTIFICATION.EXTERNAL_PATIENT_ID.ID;
-                var CCC_NUMBER;
-                var FIRST_NAME = hl7_message.PATIENT_IDENTIFICATION.PATIENT_NAME.FIRST_NAME;
-                var MIDDLE_NAME = hl7_message.PATIENT_IDENTIFICATION.PATIENT_NAME.MIDDLE_NAME;
-                var LAST_NAME = hl7_message.PATIENT_IDENTIFICATION.PATIENT_NAME.LAST_NAME;
-                var SENDING_APPLICATION = hl7_message.MESSAGE_HEADER.SENDING_APPLICATION;
-                var SENDING_FACILITY = hl7_message.MESSAGE_HEADER.SENDING_FACILITY;
-                var OBSERVATION_VALUE;
-                var OBSERVATION_DATETIME;
-                var MESSAGE_TYPE = hl7_message.MESSAGE_HEADER.MESSAGE_TYPE;
-                var PROCESSED = 'Pending';
-
-                var result = get_json(hl7_message);
-
-                console.log(result)
-
-                for (var i = 0; i < result.length; i++) {
-                    var key = result[i].key;                
-                    var value = result[i].value;
-
-                    if (key == "DEATH_DATE") {
-                        DEATH_DATE = result[i].value;
-                    } else if (key == "DEATH_INDICATOR") {
-                        DEATH_INDICATOR = result[i].value;
-                    }
-                        
-                    if (key == "ID") {
-                        if (result[i + 1].value == "CCC_NUMBER") {
-                            CCC_NUMBER = result[i].value;
-                        }
-                    } else if(key == "OBSERVATION_VALUE") {
-                        OBSERVATION_VALUE = result[i].value;
-                    } else if(key == "OBSERVATION_DATETIME") {
-                        OBSERVATION_DATETIME = result[i].value;
-                    }
-            
-                }      
-
-                if (CCC_NUMBER.length != 10 || isNaN(CCC_NUMBER)) {
-                    response = `Invalid CCC Number: ${CCC_NUMBER}`;
-                    console.log(response);
-                    return;
-                }
-
-
-                if(OBSERVATION_VALUE === "DEAD") {
-                    var death_ind = "Deceased"
-                } else {
-                    var death_ind = "Active"
-                }
-
-                var observation_year = OBSERVATION_DATETIME.substring(0, 4);
-                var observation_month = OBSERVATION_DATETIME.substring(4, 6);
-                var observation_day = OBSERVATION_DATETIME.substring(6, 8);
-                var observation_hour = OBSERVATION_DATETIME.substring(8, 10);
-                var observation_minute = OBSERVATION_DATETIME.substring(10, 12);
-                var observation_second = OBSERVATION_DATETIME.substring(12, 14);
-                var new_observation_date = observation_year + "-" + observation_month + "-" + observation_day + " " + observation_hour + ":" + observation_minute + ":" + observation_second;
-
-                if(OBSERVATION_VALUE == "TRANSFER_OUT") {
-
-                    var new_value = "Transfer Out";
-
-                } else if(OBSERVATION_VALUE == "DIED") {
-
-                    var new_value = "Deceased";
-
-                } else if(OBSERVATION_VALUE == "LOST_TO_FOLLOWUP") {
-
-                    var new_value = "LTFU";
 
                 }   
+        
+            });
+            
+        
+        }).catch(function(error){
 
-                client_oru = {
+            console.log("No internet, saving data locally", error);
 
-                   f_name: FIRST_NAME,
-                   m_name: MIDDLE_NAME,
-                   l_name: LAST_NAME,
-                   clinic_number: CCC_NUMBER,
-                   message_type: MESSAGE_TYPE,
-                   mfl_code: SENDING_FACILITY,
-                   sending_application: SENDING_APPLICATION,
-                   observation_value: new_value,
-                   new_observation_datetime: new_observation_date,
-                   death_status: death_ind,
-                   processed: PROCESSED
+            //if offline push data from request to local db
+            var DATE_TODAY = moment(new Date()).format("YYYY-MM-DD");
 
-                } 
-                
-                async function save() {
+            var message_type = hl7_message.MESSAGE_HEADER.MESSAGE_TYPE;
+            var SENDING_APPLICATION = hl7_message.MESSAGE_HEADER.SENDING_APPLICATION;
+            var MESSAGE_DATETIME = hl7_message.MESSAGE_HEADER.MESSAGE_DATETIME;
 
-                    await ClientOru.create(client_oru)
-                    .then(function (model) {
+            if (SENDING_APPLICATION === 'KENYAEMR' || SENDING_APPLICATION === 'ADT') {
+
+                if (message_type == "ADT^A04") {
+
+                    var GODS_NUMBER = hl7_message.PATIENT_IDENTIFICATION.EXTERNAL_PATIENT_ID.ID;
+                    var CCC_NUMBER;
+                    var PATIENT_CLINIC_NUMBER;
+                    var SENDING_FACILITY = hl7_message.MESSAGE_HEADER.SENDING_FACILITY;
+                    var FIRST_NAME = hl7_message.PATIENT_IDENTIFICATION.PATIENT_NAME.FIRST_NAME;
+                    var MIDDLE_NAME = hl7_message.PATIENT_IDENTIFICATION.PATIENT_NAME.MIDDLE_NAME;
+                    var LAST_NAME = hl7_message.PATIENT_IDENTIFICATION.PATIENT_NAME.LAST_NAME;
+                    var DATE_OF_BIRTH = hl7_message.PATIENT_IDENTIFICATION.DATE_OF_BIRTH;
+                    var SEX;
+                    var PHONE_NUMBER;
+                    var MARITAL_STATUS;
+                    var PATIENT_SOURCE = hl7_message.PATIENT_VISIT.PATIENT_SOURCE;
+                    var ENROLLMENT_DATE = hl7_message.PATIENT_VISIT.HIV_CARE_ENROLLMENT_DATE;
+                    var PATIENT_TYPE = hl7_message.PATIENT_VISIT.PATIENT_TYPE;
+                    var GROUP_ID;
+                    var COUNTY = hl7_message.PATIENT_IDENTIFICATION.PATIENT_ADDRESS.PHYSICAL_ADDRESS.COUNTY;
+                    var SUB_COUNTY = hl7_message.PATIENT_IDENTIFICATION.PATIENT_ADDRESS.PHYSICAL_ADDRESS.SUB_COUNTY;
+                    var WARD = hl7_message.PATIENT_IDENTIFICATION.PATIENT_ADDRESS.PHYSICAL_ADDRESS.WARD;
+                    var VILLAGE = hl7_message.PATIENT_IDENTIFICATION.PATIENT_ADDRESS.PHYSICAL_ADDRESS.VILLAGE;
+                    var ART_DATE;
+                    var PROCESSED = 'Pending';  
+
+                    var result = get_json(hl7_message);
+
+                    console.log(result);
+
+                    for (var i = 0; i < result.length; i++) {
+                        var key = result[i].key;
+                        var value = result[i].value;
+
+                        if (key == "DATE_OF_BIRTH") {
+                            var DoB = DATE_OF_BIRTH;
+        
+                            var year = DoB.substring(0, 4);
+                            var month = DoB.substring(4, 6);
+                            var day = DoB.substring(6, 8);
+        
+                            var today = DATE_TODAY;
+        
+                            var new_date = year + "-" + month + "-" + day;
+                            var date_diff = moment(today).diff(
+                                moment(new_date).format("YYYY-MM-DD"),
+                                "days"
+                            );
+        
+                            if (date_diff >= 5475 && date_diff <= 6935) {
+                                GROUP_ID = "2";
+                            }
+                            if (date_diff >= 7300) {
+                                GROUP_ID = "1";
+                            }
+                            if (date_diff <= 5110) {
+                                GROUP_ID = "6";
+                            }
+                        } else if (key == "SEX") {
+                            if (result[i].value == "F") {
+                                SEX = "1";
+                            } else {
+                                SEX = "2";
+                            }
+                        } else if (key == "PHONE_NUMBER") {
+                            PHONE_NUMBER = result[i].value;
+                        } else if (key == "MARITAL_STATUS") {
+                            if (result[i].value === "") {
+                                MARITAL_STATUS = "1";
+                            }
+                            if (result[i].value == "D") {
+                                MARITAL_STATUS = "3";
+                            } else if (result[i].value == "M") {
+                                MARITAL_STATUS = "2";
+                            } else if (result[i].value == "S") {
+                                MARITAL_STATUS = "1";
+                            } else if (result[i].value == "W") {
+                                MARITAL_STATUS = "4";
+                            } else if (result[i].value == "C") {
+                                MARITAL_STATUS = "5";
+                            }
+                        }
+                        if (key == "ID") {
+                            if (result[i + 1].value == "CCC_NUMBER") {
+                                CCC_NUMBER = result[i].value;
+                            }
+                        }
+
+                        if (key == "ID") {
+                            if (result[i + 1].value == "PATIENT_CLINIC_NUMBER") {
+                                PATIENT_CLINIC_NUMBER = result[i].value;
+                            }
+                        }
+
+                        if(SENDING_APPLICATION == "ADT") {
+                            if(key == "OBSERVATION_IDENTIFIER") {
+                                if (result[i].value == "ART_START") {
+                                    ART_DATE = result[i+3].value;
+                                }  
+                            } 
+        
+                        } else if(SENDING_APPLICATION === "KENYAEMR") {
+                            if(key == "OBSERVATION_DATETIME") {
+                                if (result[i + 5].value == "CURRENT_REGIMEN") {
+                                    ART_DATE = result[i].value;
+                                }  
+                            } 
+        
+                                
+                        }
+                    }
+
+                    var enroll_year = ENROLLMENT_DATE.substring(0, 4);
+                    var enroll_month = ENROLLMENT_DATE.substring(4, 6);
+                    var enroll_day = ENROLLMENT_DATE.substring(6, 8);
+                    var new_enroll_date = enroll_year + "-" + enroll_month + "-" + enroll_day;
+
+                    console.log("date", ART_DATE)
+
+                    if(ART_DATE == "" || ART_DATE == undefined ) {
+
+                        var new_art_date = null;
+
+                    } else {
+
+                        var art_year = ART_DATE.substring(0, 4);
+                        var art_month = ART_DATE.substring(4, 6);
+                        var art_day = ART_DATE.substring(6, 8);
+                        var new_art_date = art_year + "-" + art_month + "-" + art_day;
+
+                    }
+
+                    client = {
+                        f_name: FIRST_NAME,
+                        m_name: MIDDLE_NAME,
+                        l_name: LAST_NAME,
+                        dob: new_date,
+                        clinic_number: CCC_NUMBER,
+                        patient_clinic_number: PATIENT_CLINIC_NUMBER,
+                        mfl_code: parseInt(SENDING_FACILITY),
+                        gender: parseInt(SEX),
+                        marital: MARITAL_STATUS,
+                        phone_no: PHONE_NUMBER,
+                        gods_number: GODS_NUMBER,
+                        group_id: parseInt(GROUP_ID),
+                        sending_application: SENDING_APPLICATION,
+                        db_source: SENDING_APPLICATION,
+                        patient_source: PATIENT_SOURCE,
+                        enrollment_date: new_enroll_date,
+                        art_date: new_art_date,
+                        client_type: PATIENT_TYPE,
+                        locator_county: COUNTY,
+                        locator_sub_county: SUB_COUNTY,
+                        locator_ward: WARD,
+                        locator_village: VILLAGE,
+                        message_type: MESSAGE_TYPE,
+                        processed: PROCESSED
+                    }
+
+                    console.log(client)
+
+                    async function saveData() {
+
+                        await Client.create(client)
+                        .then(function (res) {
+                            message = "OK";
+                            response = "Client saved on local db";
+                            console.log(res)
+
+                            return res;
+                        })
+                        .catch(function (err) {
+                            code = 500;
+                            response = err.message;
+                            console.log(error)
+
+                            return response;
+                        })
+
+                    }
+
+                    saveData();
+
+
+                } else if (message_type == "SIU^S12") {
+                    var GODS_NUMBER = hl7_message.PATIENT_IDENTIFICATION.EXTERNAL_PATIENT_ID.ID;
+                    var SENDING_FACILITY;
+        
+                    var CCC_NUMBER;
+                    var APPOINTMENT_REASON;
+                    var APPOINTMENT_TYPE;
+                    var APPOINTMENT_DATE;
+                    var APPOINTMENT_PLACING_ENTITY;
+                    var PLACER_APPOINTMENT_NUMBER;
+                    var APPOINTMENT_LOCATION;
+                    //var ACTION_CODE;
+                    var APPOINTMENT_NOTE;
+                    var APPOINTMENT_HONORED;
+                    var VISIT_DATE;
+                    var PROCESSED = 'Pending';
+        
+                    var result = get_json(hl7_message);
+        
+                    for (var i = 0; i < result.length; i++) {
+                        var key = result[i].key;
+                        var key_value = result[i].value;
+        
+                        if (key == "NUMBER") {
+                            PLACER_APPOINTMENT_NUMBER = result[i].value;
+                        } else if (key == "GODS_NUMBER") {
+                            GODS_NUMBER = result[i].value;
+                        } else if (key == "APPOINTMENT_REASON") {
+                            APPOINTMENT_REASON = result[i].value;
+                        } else if (key == "APPOINTMENT_TYPE") {
+                            APPOINTMENT_TYPE = result[i].value;
+                        } else if (key == "VISIT_DATE") {
+                            VISIT_DATE = result[i].value;
+                        } else if (key == "APPOINTMENT_LOCATION") {
+                            APPOINTMENT_LOCATION = result[i].value;
+                        } else if (key == "APPINTMENT_HONORED") {
+                            APPOINTMENT_HONORED = result[i].value;
+                        } else if (key == "APPOINTMENT_NOTE") {
+                            APPOINTMENT_NOTE = result[i].value;
+                        } else if (key == "ACTION_CODE") {
+                            ACTION_CODE = result[i].value;
+                        } else if (key == "APPOINTMENT_PLACING_ENTITY") {
+                            APPOINTMENT_PLACING_ENTITY = result[i].value;
+                        } else if (key == "APPOINTMENT_DATE") {
+                            APPOINTMENT_DATE = result[i].value;
+                            APPOINTMENT_DATE = APPOINTMENT_DATE;
+        
+                            var year = APPOINTMENT_DATE.substring(0, 4);
+                            var month = APPOINTMENT_DATE.substring(4, 6);
+                            var day = APPOINTMENT_DATE.substring(6, 8);
+        
+                            var app_date = year + "-" + month + "-" + day;
+        
+                            var current_date = moment(new Date());
+                            var today = current_date.format("YYYY-MM-DD");
+        
+                            var BirthDate = moment(app_date);
+                            APPOINTMENT_DATE = BirthDate.format("YYYY-MM-DD");
+                        }
+                        
+                        if (key == "ID") {
+                            if (result[i + 1].value == "CCC_NUMBER") {
+                                CCC_NUMBER = result[i].value;
+                            }
+                        }
+                    }
+        
+                    if (CCC_NUMBER.length != 10 || isNaN(CCC_NUMBER)) {
+                        console.log("Invalid CCC NUMBER");
+                    }
+        
+                    if (!APPOINTMENT_TYPE) {
+                        APPOINTMENT_TYPE = 1;
+                    }
+
+                    if (APPOINTMENT_LOCATION == "PHARMACY" || APPOINTMENT_REASON == "REGIMEN REFILL") {
+                        APPOINTMENT_TYPE = 1;
+                    } else {
+                        APPOINTMENT_TYPE = 2;
+                    }
+
+                    var APP_STATUS = "Booked";
+                    var ACTIVE_APP = "1";
+                    var SENDING_APPLICATION = hl7_message.MESSAGE_HEADER.SENDING_APPLICATION;
+                    var SENDING_FACILITY = hl7_message.MESSAGE_HEADER.SENDING_FACILITY;
+
+                    let appointment = {
+                        appntmnt_date: APPOINTMENT_DATE,
+                        app_type_1: APPOINTMENT_TYPE,
+                        clinic_number: CCC_NUMBER,
+                        message_type: MESSAGE_TYPE,
+                        appointment_reason: APPOINTMENT_REASON,
+                        app_status: APP_STATUS,
+                        db_source: SENDING_APPLICATION,
+                        active_app: ACTIVE_APP,
+                        appointment_location: APPOINTMENT_LOCATION,
+                        reason: APPOINTMENT_NOTE,
+                        placer_appointment_number: PLACER_APPOINTMENT_NUMBER,
+                        created_at: VISIT_DATE,
+                        processed: PROCESSED
+                    }
+
+                    async function save() {
+
+                        await Appointment.create(appointment)
+                        .then(async function (data) {
+                        console.log(data)
                         message = "OK";
-                        response = "Client Observation saved on local db";
+                        response = "Appointment saved in local db"
 
                         return response;
-                    })
-                    .catch(function (error) {
-                        code = 500;
-                        response = err.message;
-                        console.log(error)
+                        
+                        })
+                        .catch(function (error) {
+                            code = 500;
+                            response = err.message;
+                            console.log(error)
 
-                        return response;
-                    })
-                }
-                
-                save();
+                            return response
+                        })
 
 
-            } else if(message_type == "ADT^A08") {
-
-                var GODS_NUMBER = hl7_message.PATIENT_IDENTIFICATION.EXTERNAL_PATIENT_ID.ID;
-                var CCC_NUMBER;
-                var PATIENT_CLINIC_NUMBER;
-                var SENDING_FACILITY = hl7_message.MESSAGE_HEADER.SENDING_FACILITY;
-                var FIRST_NAME = hl7_message.PATIENT_IDENTIFICATION.PATIENT_NAME.FIRST_NAME;
-                var MIDDLE_NAME = hl7_message.PATIENT_IDENTIFICATION.PATIENT_NAME.MIDDLE_NAME;
-                var LAST_NAME = hl7_message.PATIENT_IDENTIFICATION.PATIENT_NAME.LAST_NAME;
-                var DATE_OF_BIRTH = hl7_message.PATIENT_IDENTIFICATION.DATE_OF_BIRTH;
-                var SEX;
-                var PHONE_NUMBER;
-                var MARITAL_STATUS;
-                var PATIENT_SOURCE = hl7_message.PATIENT_VISIT.PATIENT_SOURCE;
-                var ENROLLMENT_DATE = hl7_message.PATIENT_VISIT.HIV_CARE_ENROLLMENT_DATE;
-                var PATIENT_TYPE = hl7_message.PATIENT_VISIT.PATIENT_TYPE;
-                var GROUP_ID;
-                var COUNTY = hl7_message.PATIENT_IDENTIFICATION.PATIENT_ADDRESS.PHYSICAL_ADDRESS.COUNTY;
-                var SUB_COUNTY = hl7_message.PATIENT_IDENTIFICATION.PATIENT_ADDRESS.PHYSICAL_ADDRESS.SUB_COUNTY;
-                var WARD = hl7_message.PATIENT_IDENTIFICATION.PATIENT_ADDRESS.PHYSICAL_ADDRESS.WARD;
-                var VILLAGE = hl7_message.PATIENT_IDENTIFICATION.PATIENT_ADDRESS.PHYSICAL_ADDRESS.VILLAGE;
-                var ART_DATE;
-                var PROCESSED = 'Pending';
-
-                var result = get_json(hl7_message);
-
-                console.log(result);
-
-                for (var i = 0; i < result.length; i++) {
-                    var key = result[i].key;
-                    var value = result[i].value;
-
-                    if (key == "DATE_OF_BIRTH") {
-                        var DoB = DATE_OF_BIRTH;
-    
-                        var year = DoB.substring(0, 4);
-                        var month = DoB.substring(4, 6);
-                        var day = DoB.substring(6, 8);
-    
-                        var today = DATE_TODAY;
-    
-                        var new_date = year + "-" + month + "-" + day;
-                        var date_diff = moment(today).diff(
-                            moment(new_date).format("YYYY-MM-DD"),
-                            "days"
-                        );
-    
-                        if (date_diff >= 5475 && date_diff <= 6935) {
-                            GROUP_ID = "2";
-                        }
-                        if (date_diff >= 7300) {
-                            GROUP_ID = "1";
-                        }
-                        if (date_diff <= 5110) {
-                            GROUP_ID = "6";
-                        }
-                    } else if (key == "SEX") {
-                        if (result[i].value == "F") {
-                            SEX = "1";
-                        } else {
-                            SEX = "2";
-                        }
-                    } else if (key == "PHONE_NUMBER") {
-                        PHONE_NUMBER = result[i].value;
-                    } else if (key == "MARITAL_STATUS") {
-                        if (result[i].value === "") {
-                            MARITAL_STATUS = "1";
-                        }
-                        if (result[i].value == "D") {
-                            MARITAL_STATUS = "3";
-                        } else if (result[i].value == "M") {
-                            MARITAL_STATUS = "2";
-                        } else if (result[i].value == "S") {
-                            MARITAL_STATUS = "1";
-                        } else if (result[i].value == "W") {
-                            MARITAL_STATUS = "4";
-                        } else if (result[i].value == "C") {
-                            MARITAL_STATUS = "5";
-                        }
-                    }
-                    if (key == "ID") {
-                        if (result[i + 1].value == "CCC_NUMBER") {
-                            CCC_NUMBER = result[i].value;
-                        }
                     }
 
-                    if (key == "ID") {
-                        if (result[i + 1].value == "PATIENT_CLINIC_NUMBER") {
-                            PATIENT_CLINIC_NUMBER = result[i].value;
-                        }
-                    }
+                    save();
 
-                    if(SENDING_APPLICATION == "ADT") {
-                        if(key == "OBSERVATION_IDENTIFIER") {
-                            if (result[i].value == "ART_START") {
-                                ART_DATE = result[i+3].value;
-                            }  
-                        } 
-    
-                    } else if(SENDING_APPLICATION === "KENYAEMR") {
-                        if(key == "OBSERVATION_DATETIME") {
-                            if (result[i + 5].value == "CURRENT_REGIMEN") {
-                                ART_DATE = result[i].value;
-                            }  
-                        } 
+                        
+                } else if(message_type === "ORU^R01") {
+
+                    var GODS_NUMBER = hl7_message.PATIENT_IDENTIFICATION.EXTERNAL_PATIENT_ID.ID;
+                    var CCC_NUMBER;
+                    var FIRST_NAME = hl7_message.PATIENT_IDENTIFICATION.PATIENT_NAME.FIRST_NAME;
+                    var MIDDLE_NAME = hl7_message.PATIENT_IDENTIFICATION.PATIENT_NAME.MIDDLE_NAME;
+                    var LAST_NAME = hl7_message.PATIENT_IDENTIFICATION.PATIENT_NAME.LAST_NAME;
+                    var SENDING_APPLICATION = hl7_message.MESSAGE_HEADER.SENDING_APPLICATION;
+                    var SENDING_FACILITY = hl7_message.MESSAGE_HEADER.SENDING_FACILITY;
+                    var OBSERVATION_VALUE;
+                    var OBSERVATION_DATETIME;
+                    var MESSAGE_TYPE = hl7_message.MESSAGE_HEADER.MESSAGE_TYPE;
+                    var PROCESSED = 'Pending';
+
+                    var result = get_json(hl7_message);
+
+                    console.log(result)
+
+                    for (var i = 0; i < result.length; i++) {
+                        var key = result[i].key;                
+                        var value = result[i].value;
+
+                        if (key == "DEATH_DATE") {
+                            DEATH_DATE = result[i].value;
+                        } else if (key == "DEATH_INDICATOR") {
+                            DEATH_INDICATOR = result[i].value;
+                        }
                             
+                        if (key == "ID") {
+                            if (result[i + 1].value == "CCC_NUMBER") {
+                                CCC_NUMBER = result[i].value;
+                            }
+                        } else if(key == "OBSERVATION_VALUE") {
+                            OBSERVATION_VALUE = result[i].value;
+                        } else if(key == "OBSERVATION_DATETIME") {
+                            OBSERVATION_DATETIME = result[i].value;
+                        }
+                
+                    }      
+
+                    if (CCC_NUMBER.length != 10 || isNaN(CCC_NUMBER)) {
+                        response = `Invalid CCC Number: ${CCC_NUMBER}`;
+                        console.log(response);
+                        return;
                     }
-                }
 
-                var enroll_year = ENROLLMENT_DATE.substring(0, 4);
-                var enroll_month = ENROLLMENT_DATE.substring(4, 6);
-                var enroll_day = ENROLLMENT_DATE.substring(6, 8);
-                var new_enroll_date = enroll_year + "-" + enroll_month + "-" + enroll_day;
 
-                if(ART_DATE == "" || ART_DATE == undefined ) {
+                    if(OBSERVATION_VALUE === "DEAD") {
+                        var death_ind = "Deceased"
+                    } else {
+                        var death_ind = "Active"
+                    }
 
-                    var new_art_date = null;
+                    var observation_year = OBSERVATION_DATETIME.substring(0, 4);
+                    var observation_month = OBSERVATION_DATETIME.substring(4, 6);
+                    var observation_day = OBSERVATION_DATETIME.substring(6, 8);
+                    var observation_hour = OBSERVATION_DATETIME.substring(8, 10);
+                    var observation_minute = OBSERVATION_DATETIME.substring(10, 12);
+                    var observation_second = OBSERVATION_DATETIME.substring(12, 14);
+                    var new_observation_date = observation_year + "-" + observation_month + "-" + observation_day + " " + observation_hour + ":" + observation_minute + ":" + observation_second;
 
-                } else {
+                    if(OBSERVATION_VALUE == "TRANSFER_OUT") {
 
-                    var art_year = ART_DATE.substring(0, 4);
-                    var art_month = ART_DATE.substring(4, 6);
-                    var art_day = ART_DATE.substring(6, 8);
-                    var new_art_date = art_year + "-" + art_month + "-" + art_day;
+                        var new_value = "Transfer Out";
 
-                }
+                    } else if(OBSERVATION_VALUE == "DIED") {
 
-                client = {
+                        var new_value = "Deceased";
+
+                    } else if(OBSERVATION_VALUE == "LOST_TO_FOLLOWUP") {
+
+                        var new_value = "LTFU";
+
+                    }   
+
+                    client_oru = {
+
                     f_name: FIRST_NAME,
                     m_name: MIDDLE_NAME,
                     l_name: LAST_NAME,
-                    dob: new_date,
                     clinic_number: CCC_NUMBER,
-                    patient_clinic_number: PATIENT_CLINIC_NUMBER,
-                    mfl_code: parseInt(SENDING_FACILITY),
-                    gender: parseInt(SEX),
-                    marital: MARITAL_STATUS,
-                    phone_no: PHONE_NUMBER,
-                    GODS_NUMBER: GODS_NUMBER,
-                    group_id: parseInt(GROUP_ID),
-                    sending_application: SENDING_APPLICATION,
-                    db_source: SENDING_APPLICATION,
-                    patient_source: PATIENT_SOURCE,
-                    enrollment_date: new_enroll_date,
-                    art_date: new_art_date,
-                    client_type: PATIENT_TYPE,
-                    locator_county: COUNTY,
-                    locator_sub_county: SUB_COUNTY,
-                    locator_ward: WARD,
-                    locator_village: VILLAGE,
                     message_type: MESSAGE_TYPE,
+                    mfl_code: SENDING_FACILITY,
+                    sending_application: SENDING_APPLICATION,
+                    observation_value: new_value,
+                    new_observation_datetime: new_observation_date,
+                    death_status: death_ind,
                     processed: PROCESSED
-                }
 
-                console.log(client)
+                    } 
+                    
+                    async function save() {
 
-                async function save() {
+                        await ClientOru.create(client_oru)
+                        .then(function (model) {
+                            message = "OK";
+                            response = "Client Observation saved on local db";
 
-                    await Client.create(client)
-                    .then(function (response) {
-                        message = "OK";
-                        response = "Client saved on local db";
-                        console.log(response)
+                            return response;
+                        })
+                        .catch(function (error) {
+                            code = 500;
+                            response = err.message;
+                            console.log(error)
 
-                        return response;
-                    })
-                    .catch(function (error) {
-                        code = 500;
-                        response = error.message;
-                        console.log(error)
-
-                        return response;
-                    })
-                }
-                
-                save();
-
-            }    
+                            return response;
+                        })
+                    }
+                    
+                    save();
 
 
-        } else {
+                } else if(message_type == "ADT^A08") {
 
-            console.log("IQCare Message, skip")
-        }	
+                    var GODS_NUMBER = hl7_message.PATIENT_IDENTIFICATION.EXTERNAL_PATIENT_ID.ID;
+                    var CCC_NUMBER;
+                    var PATIENT_CLINIC_NUMBER;
+                    var SENDING_FACILITY = hl7_message.MESSAGE_HEADER.SENDING_FACILITY;
+                    var FIRST_NAME = hl7_message.PATIENT_IDENTIFICATION.PATIENT_NAME.FIRST_NAME;
+                    var MIDDLE_NAME = hl7_message.PATIENT_IDENTIFICATION.PATIENT_NAME.MIDDLE_NAME;
+                    var LAST_NAME = hl7_message.PATIENT_IDENTIFICATION.PATIENT_NAME.LAST_NAME;
+                    var DATE_OF_BIRTH = hl7_message.PATIENT_IDENTIFICATION.DATE_OF_BIRTH;
+                    var SEX;
+                    var PHONE_NUMBER;
+                    var MARITAL_STATUS;
+                    var PATIENT_SOURCE = hl7_message.PATIENT_VISIT.PATIENT_SOURCE;
+                    var ENROLLMENT_DATE = hl7_message.PATIENT_VISIT.HIV_CARE_ENROLLMENT_DATE;
+                    var PATIENT_TYPE = hl7_message.PATIENT_VISIT.PATIENT_TYPE;
+                    var GROUP_ID;
+                    var COUNTY = hl7_message.PATIENT_IDENTIFICATION.PATIENT_ADDRESS.PHYSICAL_ADDRESS.COUNTY;
+                    var SUB_COUNTY = hl7_message.PATIENT_IDENTIFICATION.PATIENT_ADDRESS.PHYSICAL_ADDRESS.SUB_COUNTY;
+                    var WARD = hl7_message.PATIENT_IDENTIFICATION.PATIENT_ADDRESS.PHYSICAL_ADDRESS.WARD;
+                    var VILLAGE = hl7_message.PATIENT_IDENTIFICATION.PATIENT_ADDRESS.PHYSICAL_ADDRESS.VILLAGE;
+                    var ART_DATE;
+                    var PROCESSED = 'Pending';
 
-    });
+                    var result = get_json(hl7_message);
+
+                    console.log(result);
+
+                    for (var i = 0; i < result.length; i++) {
+                        var key = result[i].key;
+                        var value = result[i].value;
+
+                        if (key == "DATE_OF_BIRTH") {
+                            var DoB = DATE_OF_BIRTH;
+        
+                            var year = DoB.substring(0, 4);
+                            var month = DoB.substring(4, 6);
+                            var day = DoB.substring(6, 8);
+        
+                            var today = DATE_TODAY;
+        
+                            var new_date = year + "-" + month + "-" + day;
+                            var date_diff = moment(today).diff(
+                                moment(new_date).format("YYYY-MM-DD"),
+                                "days"
+                            );
+        
+                            if (date_diff >= 5475 && date_diff <= 6935) {
+                                GROUP_ID = "2";
+                            }
+                            if (date_diff >= 7300) {
+                                GROUP_ID = "1";
+                            }
+                            if (date_diff <= 5110) {
+                                GROUP_ID = "6";
+                            }
+                        } else if (key == "SEX") {
+                            if (result[i].value == "F") {
+                                SEX = "1";
+                            } else {
+                                SEX = "2";
+                            }
+                        } else if (key == "PHONE_NUMBER") {
+                            PHONE_NUMBER = result[i].value;
+                        } else if (key == "MARITAL_STATUS") {
+                            if (result[i].value === "") {
+                                MARITAL_STATUS = "1";
+                            }
+                            if (result[i].value == "D") {
+                                MARITAL_STATUS = "3";
+                            } else if (result[i].value == "M") {
+                                MARITAL_STATUS = "2";
+                            } else if (result[i].value == "S") {
+                                MARITAL_STATUS = "1";
+                            } else if (result[i].value == "W") {
+                                MARITAL_STATUS = "4";
+                            } else if (result[i].value == "C") {
+                                MARITAL_STATUS = "5";
+                            }
+                        }
+                        if (key == "ID") {
+                            if (result[i + 1].value == "CCC_NUMBER") {
+                                CCC_NUMBER = result[i].value;
+                            }
+                        }
+
+                        if (key == "ID") {
+                            if (result[i + 1].value == "PATIENT_CLINIC_NUMBER") {
+                                PATIENT_CLINIC_NUMBER = result[i].value;
+                            }
+                        }
+
+                        if(SENDING_APPLICATION == "ADT") {
+                            if(key == "OBSERVATION_IDENTIFIER") {
+                                if (result[i].value == "ART_START") {
+                                    ART_DATE = result[i+3].value;
+                                }  
+                            } 
+        
+                        } else if(SENDING_APPLICATION === "KENYAEMR") {
+                            if(key == "OBSERVATION_DATETIME") {
+                                if (result[i + 5].value == "CURRENT_REGIMEN") {
+                                    ART_DATE = result[i].value;
+                                }  
+                            } 
+                                
+                        }
+                    }
+
+                    var enroll_year = ENROLLMENT_DATE.substring(0, 4);
+                    var enroll_month = ENROLLMENT_DATE.substring(4, 6);
+                    var enroll_day = ENROLLMENT_DATE.substring(6, 8);
+                    var new_enroll_date = enroll_year + "-" + enroll_month + "-" + enroll_day;
+
+                    if(ART_DATE == "" || ART_DATE == undefined ) {
+
+                        var new_art_date = null;
+
+                    } else {
+
+                        var art_year = ART_DATE.substring(0, 4);
+                        var art_month = ART_DATE.substring(4, 6);
+                        var art_day = ART_DATE.substring(6, 8);
+                        var new_art_date = art_year + "-" + art_month + "-" + art_day;
+
+                    }
+
+                    client = {
+                        f_name: FIRST_NAME,
+                        m_name: MIDDLE_NAME,
+                        l_name: LAST_NAME,
+                        dob: new_date,
+                        clinic_number: CCC_NUMBER,
+                        patient_clinic_number: PATIENT_CLINIC_NUMBER,
+                        mfl_code: parseInt(SENDING_FACILITY),
+                        gender: parseInt(SEX),
+                        marital: MARITAL_STATUS,
+                        phone_no: PHONE_NUMBER,
+                        GODS_NUMBER: GODS_NUMBER,
+                        group_id: parseInt(GROUP_ID),
+                        sending_application: SENDING_APPLICATION,
+                        db_source: SENDING_APPLICATION,
+                        patient_source: PATIENT_SOURCE,
+                        enrollment_date: new_enroll_date,
+                        art_date: new_art_date,
+                        client_type: PATIENT_TYPE,
+                        locator_county: COUNTY,
+                        locator_sub_county: SUB_COUNTY,
+                        locator_ward: WARD,
+                        locator_village: VILLAGE,
+                        message_type: MESSAGE_TYPE,
+                        processed: PROCESSED
+                    }
+
+                    console.log(client)
+
+                    async function save() {
+
+                        await Client.create(client)
+                        .then(function (response) {
+                            message = "OK";
+                            response = "Client saved on local db";
+                            console.log(response)
+
+                            return response;
+                        })
+                        .catch(function (error) {
+                            code = 500;
+                            response = error.message;
+                            console.log(error)
+
+                            return response;
+                        })
+                    }
+                    
+                    save();
+
+                }    
+
+
+            } else {
+
+                console.log("IQCare Message, skip")
+            }	
+
+        });
 
               
     }); 

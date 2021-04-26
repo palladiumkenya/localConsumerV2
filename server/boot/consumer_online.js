@@ -296,8 +296,8 @@ module.exports = function (app) {
     
                         var l = {
     
-                            f_name: s.f_name,
-                            l_name: s.l_name,
+                            //f_name: s.f_name,
+                            //l_name: s.l_name,
                             clinic_number: s.clinic_number,
                             file_no: s.file_no,
                             message_type: message_type,
@@ -314,8 +314,8 @@ module.exports = function (app) {
     
                         var l = {
     
-                            f_name: s.f_name,
-                            l_name: s.l_name,
+                            //f_name: s.f_name,
+                            //l_name: s.l_name,
                             clinic_number: s.clinic_number,
                             file_no: s.file_no,
                             //message_type: message_type,

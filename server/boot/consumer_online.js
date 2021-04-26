@@ -68,7 +68,7 @@ module.exports = function (app) {
     
             //if online run cron job to post from local db to sync endpoints
     
-            var send_results_job = schedule.scheduleJob("10 * * * * * ", function (fireDate) {
+            var send_results_job = schedule.scheduleJob("30 * * * * * ", function (fireDate) {
     
                 // If internet push data from local to live
                 var DATE_TODAY = moment(new Date()).format("YYYY-MM-DD H:m:s");    
@@ -300,6 +300,7 @@ module.exports = function (app) {
                             l_name: s.l_name,
                             clinic_number: s.clinic_number,
                             file_no: s.file_no,
+                            message_type: message_type,
                             sending_application: s.sending_application,
                             send_log: response.body.response.msg
                             
@@ -317,6 +318,7 @@ module.exports = function (app) {
                             l_name: s.l_name,
                             clinic_number: s.clinic_number,
                             file_no: s.file_no,
+                            //message_type: message_type,
                             sending_application: s.sending_application,
                             send_log: response.body.response.errors[0].message
                             

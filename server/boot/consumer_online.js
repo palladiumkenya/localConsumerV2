@@ -344,7 +344,7 @@ module.exports = function (app) {
     
     
                 }
-                return res.status(response.statusCode).send(response.body)
+                return res.send(true)
         
             });
             

@@ -15,7 +15,10 @@ const Client = sequelize.sequelize.define(
         dob: Sequelize.DATEONLY,
         clinic_number: {
             type: Sequelize.NUMBER,
-            unique: true,
+            unique: {
+                args: true,
+                msg: 'The CCC number already exists.'
+            },
             allowNull: false,
             len: 10
         },

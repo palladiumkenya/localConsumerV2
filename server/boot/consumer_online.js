@@ -93,7 +93,7 @@ module.exports = function (app) {
         
                                 method: "POST",
                         
-                                url: "https://il.mhealthkenya.co.ke/hl7-sync-client",
+                                url: "https://il-test.mhealthkenya.co.ke/hl7-sync-client",
                         
                                 headers: {
                         
@@ -150,7 +150,7 @@ module.exports = function (app) {
         
                                 method: "POST",
                         
-                                url: "https://il.mhealthkenya.co.ke/hl7-sync-appointment",
+                                url: "https://il-test.mhealthkenya.co.ke/hl7-sync-appointment",
                         
                                 headers: {
                         
@@ -209,7 +209,7 @@ module.exports = function (app) {
         
                             method: "POST",
                     
-                            url: "https://il.mhealthkenya.co.ke/hl7-sync-observation",
+                            url: "https://il-test.mhealthkenya.co.ke/hl7-sync-observation",
                     
                             headers: {
                     
@@ -262,7 +262,7 @@ module.exports = function (app) {
         
                 method: "POST",
         
-                url: "https://il.mhealthkenya.co.ke/hl7_message",
+                url: "https://il-test.mhealthkenya.co.ke/hl7_message",
         
                 headers: {
         
@@ -283,7 +283,6 @@ module.exports = function (app) {
                 if (error) {
     
                     console.log(error)
-                    return res.status(400).send({error})
     
                 } else if(response.body.response.msg != 'OK') {
     
@@ -1007,104 +1006,106 @@ module.exports = function (app) {
 
 	});
 
-
-	var j = schedule.scheduleJob("30 * * * * *", function (fireDate) {
-
-		var DATE_TODAY = moment(new Date()).format("YYYY-MM-DD H:m:s");
-
-		console.log(DATE_TODAY);
-
-		console.log(
-
-			"This cron job is supposed to run at => " +
-
-				DATE_TODAY +
-
-				"And FireDate => " +
-
-				fireDate +
-
-				" "
-
-		);
+    //disabled mlab
 
 
+	// var j = schedule.scheduleJob("30 * * * * *", function (fireDate) {
 
-		var getVirals = {
+	// 	var DATE_TODAY = moment(new Date()).format("YYYY-MM-DD H:m:s");
 
-			method: "POST",
+	// 	console.log(DATE_TODAY);
 
-			url: "https://mlab.mhealthkenya.co.ke/api/get/il/viral_loads",
+	// 	console.log(
 
-			headers: {
+	// 		"This cron job is supposed to run at => " +
 
-				"cache-control": "no-cache",
+	// 			DATE_TODAY +
 
-				"Content-Type": "application/json",
+	// 			"And FireDate => " +
 
-			},
+	// 			fireDate +
 
-			body: { mfl_code: 14080 },
+	// 			" "
 
-			json: true,
-
-		};
+	// 	);
 
 
 
-		request(getVirals, function (error, response, body) {
+	// 	var getVirals = {
 
-			if (error) { console.log(error) }
+	// 		method: "POST",
 
-			if (Array.isArray(body)) {
+	// 		url: "https://mlab.mhealthkenya.co.ke/api/get/il/viral_loads",
 
-				for (var i = 0; i < body.length; i++) {
+	// 		headers: {
 
-					var data = body[i];
+	// 			"cache-control": "no-cache",
 
-					var postToIL = {
+	// 			"Content-Type": "application/json",
 
-						method: "POST",
+	// 		},
 
-						url: "http://127.0.0.1:3007/labresults/sms",
+	// 		body: { mfl_code: 14080 },
 
-						headers: {
+	// 		json: true,
 
-							"cache-control": "no-cache",
-
-							"Content-Type": "application/json",
-
-						},
-
-						body: { message: data },
-
-						json: true,
-
-					};
+	// 	};
 
 
 
-					request(postToIL, function (error, response, res) {
+	// 	request(getVirals, function (error, response, body) {
 
-						if (error) throw new Error(error);
+	// 		if (error) { console.log(error) }
+
+	// 		if (Array.isArray(body)) {
+
+	// 			for (var i = 0; i < body.length; i++) {
+
+	// 				var data = body[i];
+
+	// 				var postToIL = {
+
+	// 					method: "POST",
+
+	// 					url: "http://127.0.0.1:3007/labresults/sms",
+
+	// 					headers: {
+
+	// 						"cache-control": "no-cache",
+
+	// 						"Content-Type": "application/json",
+
+	// 					},
+
+	// 					body: { message: data },
+
+	// 					json: true,
+
+	// 				};
 
 
 
-						console.log(res);
+	// 				request(postToIL, function (error, response, res) {
 
-					});
+	// 					if (error) throw new Error(error);
 
-				}
 
-			} else {
 
-				console.log(body);
+	// 					console.log(res);
 
-			}
+	// 				});
 
-		});
+	// 			}
 
-	});
+	// 		} else {
+
+	// 			console.log(body);
+
+	// 		}
+
+	// 	});
+
+	// });
 
 };
 

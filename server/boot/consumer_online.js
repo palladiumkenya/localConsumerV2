@@ -284,65 +284,40 @@ module.exports = function (app) {
     
                     console.log(error)
     
-                } else if(response.body.response.msg != 'OK') {
-    
-    
-                    if(response.body.response.msg != 'Validation error' ) {
-    
-                        var s = response.body.response.data
-    
-                        console.log("im here",s)
-    
-                        var l = {
-    
-                            //f_name: s.f_name,
-                            //l_name: s.l_name,
-                            clinic_number: s.clinic_number,
-                            file_no: s.file_no,
-                            message_type: message_type,
-                            sending_application: s.sending_application,
-                            send_log: response.body.response.msg
-                            
-                        }
-    
-    
-    
-                    } else{
-    
-                        var s = response.body.response.errors[0].instance;
-    
-                        var l = {
-    
-                            //f_name: s.f_name,
-                            //l_name: s.l_name,
-                            clinic_number: s.clinic_number,
-                            file_no: s.file_no,
-                            //message_type: message_type,
-                            sending_application: s.sending_application,
-                            send_log: response.body.response.errors[0].message
-                            
-                        }
-    
+                } else if(response.statusCode == 400) {
+
+                    console.log("app", response )
+
+                    var s = response.body.response.data
+
+                    console.log("im here",s)
+
+                    var l = {
+
+                        f_name: s.f_name,
+                        l_name: s.l_name,
+                        clinic_number: s.clinic_number,
+                        message_type: s.message_type,
+                        sending_application: s.sending_application,
+                        send_log: response.body.response.msg
+                        
                     }
-    
-                    
-                    console.log("data",l)
-    
-                    async function save() {
-    
-                        await Logs.create(l)
-                        .then(async function (response) {
-                            console.log("here 1",response)
-                        })
-                        .catch(function (error) {
-                            console.log("here 2", error)
-                        })
-                    }
-                    
-                    save();
-    
-    
                 }
+    
+                    
+                async function save() {
+
+                    await Logs.create(l)
+                    .then(async function (response) {
+                        console.log("here 1",response)
+                    })
+                    .catch(function (error) {
+                        console.log("here 2", error)
+                    })
+                }
+                    
+                save();
+    
                 return res.send(true)
         
             });

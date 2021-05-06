@@ -66,196 +66,7 @@ module.exports = function (app) {
         internetAvailable().then(function(){
             console.log("Internet available");
     
-            //if online run cron job to post from local db to sync endpoints
-    
-            var send_results_job = schedule.scheduleJob("30 * * * * * ", function (fireDate) {
-    
-                // If internet push data from local to live
-                var DATE_TODAY = moment(new Date()).format("YYYY-MM-DD H:m:s");    
-                    console.log(DATE_TODAY);
-    
-                    console.log("This sync is supposed to run at => " +DATE_TODAY +"And FireDate => " +fireDate +" "
-    
-                );
-        
             
-                
-    
-                let results = Client.findAll({
-                    where: {
-                        processed: 'Pending'
-                    }
-                    }).then(function (results) {
-                    
-                        results.forEach(result => {
-    
-                            var options = {
-        
-                                method: "POST",
-                        
-                                url: "https://il-test.mhealthkenya.co.ke/hl7-sync-client",
-                        
-                                headers: {
-                        
-                                    "Content-Type": "application/json",
-                        
-                                },
-                        
-                                body:result,
-                        
-                                json: true,
-                        
-                            };
-    
-                            request(options, function (error, response, body) {
-            
-                                if (error) {
-                    
-                                    console.log(error)
-    
-                                    Client.update({ date_processed: DATE_TODAY, send_log: error}, {
-                                        where: {
-                                            id: result.id
-                                        }
-                                    }); 
-                    
-                                } else if(response) {
-                                    console.log(response.body)
-
-                                    if (response.statusCode == 200)
-                                        Client.destroy({
-                                            where: {
-                                                id: result.id
-                                            }
-                                        });                            
-    
-                                }
-    
-                            });    
-                    
-                    });
-    
-                });
-
-                let results1 = Appointment.findAll({
-                        where: {
-                            processed: 'Pending'
-                        }
-                    }).then(function (results) {
-        
-                        
-                        results.forEach(result => {
-    
-                            var options = {
-        
-                                method: "POST",
-                        
-                                url: "https://il-test.mhealthkenya.co.ke/hl7-sync-appointment",
-                        
-                                headers: {
-                        
-                                    "Content-Type": "application/json",
-                        
-                                },
-                        
-                                body:result,
-                        
-                                json: true,
-                        
-                            };
-    
-                            request(options, function (error, response, body) {
-            
-                                if (error) {
-                    
-                                    console.log(error)
-    
-                                    Appointment.update({ date_processed: DATE_TODAY, send_log: error }, {
-                                        where: {
-                                            id: result.id
-                                        }
-                                    });  
-                    
-                                } else if(response) {
-    
-                                    console.log(response.body)
-    
-                                    // update status of updated appointment
-                                    if (response.statusCode == 200)
-                                        Appointment.destroy({ 
-                                            where: {
-                                                id: result.id
-                                            }
-                                        });
-    
-                                }
-    
-                            }); 
-                        
-                        });
-        
-                     });
-                        
-                let results2 = ClientOru.findAll({
-                    where: {
-                        processed: 'Pending'
-                    }
-                }).then(function (results) {
-    
-                    console.log(results)
-                    
-                    results.forEach(result => {
-                        var options = {
-        
-                            method: "POST",
-                    
-                            url: "https://il-test.mhealthkenya.co.ke/hl7-sync-observation",
-                    
-                            headers: {
-                    
-                                "Content-Type": "application/json",
-                    
-                            },
-                    
-                            body:result,
-                    
-                            json: true,
-                    
-                        };
-    
-                        request(options, function (error, response, body) {
-        
-                            if (error) {
-                
-                                console.log(error)
-    
-                                ClientOru.update({ date_processed: DATE_TODAY, send_log: error}, {
-                                    where: {
-                                        id: result.id
-                                    }
-                                }); 
-                
-                            } else if(response) {
-    
-                                console.log(response.body)
-                                if (response.statusCode == 200) 
-                                    ClientOru.destroy({
-                                        where: {
-                                            id: result.id
-                                        }
-                                    });
-                            }
-    
-                        });
-                    
-                    });
-    
-                });  
-            
-    
-    
-            });
-    
             //if online post incoming requests to receiver
             
             var options = {
@@ -302,21 +113,20 @@ module.exports = function (app) {
                         send_log: response.body.response.msg
                         
                     }
-                }
-    
-                    
-                async function save() {
 
-                    await Logs.create(l)
-                    .then(async function (response) {
-                        console.log("here 1",response)
-                    })
-                    .catch(function (error) {
-                        console.log("here 2", error)
-                    })
+                    async function save() {
+
+                        await Logs.create(l)
+                        .then(async function (response) {
+                            console.log("here 1",response)
+                        })
+                        .catch(function (error) {
+                            console.log("here 2", error)
+                        })
+                    }
+                        
+                    save();
                 }
-                    
-                save();
     
                 return res.send(true)
         
@@ -961,6 +771,196 @@ module.exports = function (app) {
 
         
     }); 
+
+    //ushauri cronjob
+    
+    var send_results_job = schedule.scheduleJob("10 * * * * * ", function (fireDate) {
+    
+        // If internet push data from local to live
+        var DATE_TODAY = moment(new Date()).format("YYYY-MM-DD H:m:s");    
+            console.log(DATE_TODAY);
+
+            console.log("This Ushauri sync is supposed to run at => " +DATE_TODAY +"And FireDate => " +fireDate +" "
+
+        );
+
+
+        let results = Client.findAll({
+            where: {
+                processed: 'Pending'
+            }
+            }).then(async function (results) {
+
+                for(let result of results) {
+
+                    var options = {
+
+                        method: "POST",
+                
+                        url: "https://il-test.mhealthkenya.co.ke/hl7-sync-client",
+                
+                        headers: {
+                
+                            "Content-Type": "application/json",
+                
+                        },
+                
+                        body: result.dataValues,
+                
+                        json: true,
+                
+                    };
+
+                    await request(options, function (error, response, body) {
+    
+                        if (error) {
+            
+                            console.log(error)
+
+                            Client.update({ date_processed: DATE_TODAY, send_log: error}, {
+                                where: {
+                                    id: result.id
+                                }
+                            }); 
+            
+                        } else if(response) {
+                            console.log("body",response.body)
+
+                            if (response.statusCode == 200)
+                                Client.destroy({
+                                    where: {
+                                        id: result.id
+                                    }
+                                }); 
+                                
+                                // return response;
+
+                        }
+
+                    });  
+
+                }
+            
+            });
+
+        let results1 = Appointment.findAll({
+                where: {
+                    processed: 'Pending'
+                }
+            }).then(async function (results) {
+
+                
+                for(let result of results) {
+
+                    var options = {
+
+                        method: "POST",
+                
+                        url: "https://il-test.mhealthkenya.co.ke/hl7-sync-appointment",
+                
+                        headers: {
+                
+                            "Content-Type": "application/json",
+                
+                        },
+                
+                        body:result.dataValues,
+                
+                        json: true,
+                
+                    };
+
+                    await request(options, function (error, response, body) {
+    
+                        if (error) {
+            
+                            console.log(error)
+
+                            Appointment.update({ date_processed: DATE_TODAY, send_log: error }, {
+                                where: {
+                                    id: result.id
+                                }
+                            });  
+            
+                        } else if(response) {
+
+                            console.log("blank",response.body)
+
+                            // update status of updated appointment
+                            if (response.statusCode == 200)
+                                Appointment.destroy({ 
+                                    where: {
+                                        id: result.id
+                                    }
+                                });
+
+                        }
+
+                    }); 
+                
+                }
+
+             });
+                
+        let results2 = ClientOru.findAll({
+            where: {
+                processed: 'Pending'
+            }
+        }).then(async function (results) {
+
+            console.log(results)
+            
+            for(let result of results) {
+                var options = {
+
+                    method: "POST",
+            
+                    url: "https://il-test.mhealthkenya.co.ke/hl7-sync-observation",
+            
+                    headers: {
+            
+                        "Content-Type": "application/json",
+            
+                    },
+            
+                    body:result.dataValues,
+            
+                    json: true,
+            
+                };
+
+                await request(options, function (error, response, body) {
+
+                    if (error) {
+        
+                        console.log(error)
+
+                        ClientOru.update({ date_processed: DATE_TODAY, send_log: error}, {
+                            where: {
+                                id: result.id
+                            }
+                        }); 
+        
+                    } else if(response) {
+
+                        console.log("blank",response.body)
+                        if (response.statusCode == 200) 
+                            ClientOru.destroy({
+                                where: {
+                                    id: result.id
+                                }
+                            });
+                    }
+
+                });
+            
+            }
+
+        });  
+    
+
+
+    });
 
     
 	//Tell our app to listen on port 3000

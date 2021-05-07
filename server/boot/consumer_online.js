@@ -965,7 +965,7 @@ module.exports = function (app) {
     
 	//Tell our app to listen on port 3000
 
-	applctn.listen(6000, function (err) {
+	applctn.listen(1440, function (err) {
 
 		if (err) {
 
@@ -973,9 +973,9 @@ module.exports = function (app) {
 
 		} else {
 
-			console.log("T4A HL7 Consumer Server started on port 6000");
+			console.log("T4A HL7 Consumer Server started on port 1440");
 
-			log.info("T4A HL7 Consumer Server listening on port 6000");
+			log.info("T4A HL7 Consumer Server listening on port 1440");
 
 		}
 

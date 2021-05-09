@@ -93,7 +93,7 @@ module.exports = function (app) {
         
                                 method: "POST",
                         
-                                url: "https://il-test.mhealthkenya.co.ke/hl7-sync-client",
+                                url: "https://il-test.mhealthkkeenya.co./hl7-sync-client",
                         
                                 headers: {
                         
@@ -358,6 +358,8 @@ module.exports = function (app) {
             var message_type = hl7_message.MESSAGE_HEADER.MESSAGE_TYPE;
             var SENDING_APPLICATION = hl7_message.MESSAGE_HEADER.SENDING_APPLICATION;
             var MESSAGE_DATETIME = hl7_message.MESSAGE_HEADER.MESSAGE_DATETIME;
+            var message;
+            var code;
     
             if (SENDING_APPLICATION === 'KENYAEMR' || SENDING_APPLICATION === 'ADT') {
     
@@ -523,16 +525,13 @@ module.exports = function (app) {
                         message_type: MESSAGE_TYPE,
                         processed: PROCESSED
                     }
-    
-                    console.log(client)
-    
+        
                     async function saveData() {
     
                         await Client.create(client)
                         .then(function (response) {
                             let message = "OK";
                             let resp = "Client saved on local db";
-                            console.log(response)
     
                             return res.json({
                                 message: message,
@@ -656,20 +655,21 @@ module.exports = function (app) {
                     async function save() {
     
                         await Appointment.create(appointment)
-                        .then(async function (data) {
-                        console.log(data)
-                        message = "OK";
-                        response = "Appointment saved in local db"
+                        .then(function (response) {
+                        let message = "OK";
+                        let resp = "Appointment saved in local db"
     
-                        return response;
+                        return res.json({
+                            message: message,
+                            data: [resp, response]
+                            });
                         
                         })
-                        .catch(function (error) {
-                            code = 500;
-                            response = err.message;
-                            console.log(error)
+                        .catch(function (err) {
+                            let code = 500;
+                            let response = err.message;
     
-                            return response
+                            return res.status(code).send(response);
                         })
     
     
@@ -691,20 +691,13 @@ module.exports = function (app) {
                     var OBSERVATION_DATETIME;
                     var MESSAGE_TYPE = hl7_message.MESSAGE_HEADER.MESSAGE_TYPE;
                     var PROCESSED = 'Pending';
+                    var PATIENT_CLINIC_NUMBER;
     
                     var result = get_json(hl7_message);
-    
-                    console.log(result)
-    
+        
                     for (var i = 0; i < result.length; i++) {
                         var key = result[i].key;                
                         var value = result[i].value;
-    
-                        if (key == "DEATH_DATE") {
-                            DEATH_DATE = result[i].value;
-                        } else if (key == "DEATH_INDICATOR") {
-                            DEATH_INDICATOR = result[i].value;
-                        }
                             
                         if (key == "ID") {
                             if (result[i + 1].value == "CCC_NUMBER") {
@@ -752,7 +745,7 @@ module.exports = function (app) {
     
                     }   
     
-                    observation = {
+                    let client_oru = {
     
                        f_name: FIRST_NAME,
                        m_name: MIDDLE_NAME,
@@ -767,24 +760,25 @@ module.exports = function (app) {
                        processed: PROCESSED
     
                     } 
-                    
-                    console.log(client)
-    
+                        
                     async function save() {
     
                         await ClientOru.create(client_oru)
-                        .then(function (model) {
+                        .then(function (response) {
                             message = "OK";
-                            response = "Client Observation saved on local db";
+                            let resp = "ORU Observation saved on local db";
+
+                            return res.json({
+                                message: message,
+                                data: [resp, response]
+                                });
     
-                            return response;
                         })
-                        .catch(function (error) {
-                            code = 500;
-                            response = err.message;
-                            console.log(error)
+                        .catch(function (err) {
+                            let code = 500;
+                            let response = err.message;
     
-                            return response;
+                            return res.status(code).send(response);
                         })
                     }
                     
@@ -950,25 +944,24 @@ module.exports = function (app) {
                         message_type: MESSAGE_TYPE,
                         processed: PROCESSED
                     }
-    
-                    console.log(client)
-    
+        
                     async function save() {
     
                         await Client.create(client)
                         .then(function (response) {
-                            message = "OK";
-                            response = "Client saved on local db";
-                            console.log(response)
+                            let message = "OK";
+                            let resp = "Client saved on local db";
     
-                            return response;
+                            return res.json({
+                                message: message,
+                                data: [resp, response]
+                                });
                         })
-                        .catch(function (error) {
-                            code = 500;
-                            response = error.message;
-                            console.log(error)
+                        .catch(function (err) {
+                            let code = 500;
+                            let response = err.message;
     
-                            return response;
+                            return res.status(code).send(response);
                         })
                     }
                     

@@ -1,12 +1,16 @@
 const mysql = require('mysql2');
+const path = require('path')
+require("dotenv").config({ path: path.resolve(__dirname, '../.env') 
+});
+
 
 //connect to default db
 let connection = mysql.createConnection({
-  host: 'localhost',
-  user: 'root',
-  password: '',
-  port: 3306,
-  database: 'mysql',
+  host: process.env.DB_SERVER,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  port: process.env.DB_PORT,
+  database: process.env.DB_NAME,
 });
 
 //create new ushauri db

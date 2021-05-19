@@ -1,21 +1,11 @@
 const Sequelize = require("sequelize");
+require("dotenv").config();
 
-var connection = {  
-    host: 'localhost',
-    user: 'root',
-    password: '',
-    port: 3306,
-    database: 'ushauri_il'
-};
-const database = connection.database;
-const username = connection.user;
-const password = connection.password;
-const port = connection.port;
-const db_server = connection.host;
-
-// const sequelize = new Sequelize(
-//   `mysql://${username}:${password}@${db_server}:${port}/${database}`
-// );
+const database = process.env.NEW_DB_NAME;
+const username = process.env.DB_USER;
+const password = process.env.DB_PASSWORD;
+const port = process.env.DB_PORT;
+const db_server = process.env.DB_SERVER;
 
 const sequelize = new Sequelize(database, username, password, {
     host: db_server,
@@ -32,7 +22,9 @@ const connect = async () => {
         .catch(err => {
             console.log("Unable to connect to the database:", err.message);
         });
+    
 };
+
 const db = {
     sequelize: sequelize,
     connect

@@ -73,7 +73,7 @@ module.exports = function (app) {
         
                 method: "POST",
         
-                url: "https://il-test.mhealthkenya.co.ke/hl7_message",
+                url: "https://il.mhealthkenya.co.ke/hl7_message",
         
                 headers: {
         
@@ -796,7 +796,7 @@ module.exports = function (app) {
 
                         method: "POST",
                 
-                        url: "https://il-test.mhealthkenya.co.ke/hl7-sync-client",
+                        url: "https://il.mhealthkenya.co.ke/hl7-sync-client",
                 
                         headers: {
                 
@@ -867,7 +867,7 @@ module.exports = function (app) {
 
                         method: "POST",
                 
-                        url: "https://il-test.mhealthkenya.co.ke/hl7-sync-appointment",
+                        url: "https://il.mhealthkenya.co.ke/hl7-sync-appointment",
                 
                         headers: {
                 
@@ -937,7 +937,7 @@ module.exports = function (app) {
 
                         method: "POST",
                 
-                        url: "https://il-test.mhealthkenya.co.ke/hl7-sync-observation",
+                        url: "https://il.mhealthkenya.co.ke/hl7-sync-observation",
                 
                         headers: {
                 

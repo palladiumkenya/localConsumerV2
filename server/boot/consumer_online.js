@@ -773,7 +773,7 @@ module.exports = function (app) {
 
     //ushauri cronjob
     
-    var send_results_job = schedule.scheduleJob("10 * * * * * ", function (fireDate) {
+    var send_results_job = schedule.scheduleJob("60 * * * * * ", function (fireDate) {
     
         // If internet push data from local to live
         var DATE_TODAY = moment(new Date()).format("YYYY-MM-DD H:m:s");    

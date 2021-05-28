@@ -1022,106 +1022,104 @@ module.exports = function (app) {
 
 	});
 
-    //disabled mlab
 
+	var j = schedule.scheduleJob("30 * * * * *", function (fireDate) {
 
-	// var j = schedule.scheduleJob("30 * * * * *", function (fireDate) {
+		var DATE_TODAY = moment(new Date()).format("YYYY-MM-DD H:m:s");
 
-	// 	var DATE_TODAY = moment(new Date()).format("YYYY-MM-DD H:m:s");
+		console.log(DATE_TODAY);
 
-	// 	console.log(DATE_TODAY);
+		console.log(
 
-	// 	console.log(
+			"This cron job is supposed to run at => " +
 
-	// 		"This cron job is supposed to run at => " +
+				DATE_TODAY +
 
-	// 			DATE_TODAY +
+				"And FireDate => " +
 
-	// 			"And FireDate => " +
+				fireDate +
 
-	// 			fireDate +
+				" "
 
-	// 			" "
-
-	// 	);
-
-
-
-	// 	var getVirals = {
-
-	// 		method: "POST",
-
-	// 		url: "https://mlab.mhealthkenya.co.ke/api/get/il/viral_loads",
-
-	// 		headers: {
-
-	// 			"cache-control": "no-cache",
-
-	// 			"Content-Type": "application/json",
-
-	// 		},
-
-	// 		body: { mfl_code: 14080 },
-
-	// 		json: true,
-
-	// 	};
+		);
 
 
 
-	// 	request(getVirals, function (error, response, body) {
+		var getVirals = {
 
-	// 		if (error) { console.log(error) }
+			method: "POST",
 
-	// 		if (Array.isArray(body)) {
+			url: "https://mlab.mhealthkenya.co.ke/api/get/il/viral_loads",
 
-	// 			for (var i = 0; i < body.length; i++) {
+			headers: {
 
-	// 				var data = body[i];
+				"cache-control": "no-cache",
 
-	// 				var postToIL = {
+				"Content-Type": "application/json",
 
-	// 					method: "POST",
+			},
 
-	// 					url: "http://127.0.0.1:3007/labresults/sms",
+			body: { mfl_code: 14080 },
 
-	// 					headers: {
+			json: true,
 
-	// 						"cache-control": "no-cache",
-
-	// 						"Content-Type": "application/json",
-
-	// 					},
-
-	// 					body: { message: data },
-
-	// 					json: true,
-
-	// 				};
+		};
 
 
 
-	// 				request(postToIL, function (error, response, res) {
+		request(getVirals, function (error, response, body) {
 
-	// 					if (error) throw new Error(error);
+			if (error) { console.log(error) }
+
+			if (Array.isArray(body)) {
+
+				for (var i = 0; i < body.length; i++) {
+
+					var data = body[i];
+
+					var postToIL = {
+
+						method: "POST",
+
+						url: "http://127.0.0.1:3007/labresults/sms",
+
+						headers: {
+
+							"cache-control": "no-cache",
+
+							"Content-Type": "application/json",
+
+						},
+
+						body: { message: data },
+
+						json: true,
+
+					};
 
 
 
-	// 					console.log(res);
+					request(postToIL, function (error, response, res) {
 
-	// 				});
+						if (error) throw new Error(error);
 
-	// 			}
 
-	// 		} else {
 
-	// 			console.log(body);
+						console.log(res);
 
-	// 		}
+					});
 
-	// 	});
+				}
 
-	// });
+			} else {
+
+				console.log(body);
+
+			}
+
+		});
+
+	});
 
 };
 

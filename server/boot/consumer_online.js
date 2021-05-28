@@ -771,6 +771,9 @@ module.exports = function (app) {
         
     }); 
 
+    applctn.get('/hl7_message', function (req, res) {
+        res.send("T4A HL7 Consumer Server is running on port 1440");
+    });
     //ushauri cronjob
     
     var send_results_job = schedule.scheduleJob("60 * * * * * ", function (fireDate) {

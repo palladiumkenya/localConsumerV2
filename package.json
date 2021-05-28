@@ -20,6 +20,7 @@
     "date-difference": "^1.0.0",
     "date-time": "^2.1.0",
     "datetime-converter-nodejs": "^0.1.3",
+    "dotenv": "^9.0.2",
     "exec-php": "0.0.4",
     "helmet": "^3.10.0",
     "http": "^0.0.1-security",

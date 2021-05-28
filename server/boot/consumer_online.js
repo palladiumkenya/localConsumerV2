@@ -255,7 +255,7 @@ module.exports = function (app) {
         
                         } else if(SENDING_APPLICATION === "KENYAEMR") {
                             if(key == "OBSERVATION_DATETIME") {
-                                if (result[i + 5].value == "CURRENT_REGIMEN") {
+                                if (result[i + 5].value == "ART_START") {
                                     ART_DATE = result[i].value;
                                 }  
                             } 
@@ -677,7 +677,7 @@ module.exports = function (app) {
         
                         } else if(SENDING_APPLICATION === "KENYAEMR") {
                             if(key == "OBSERVATION_DATETIME") {
-                                if (result[i + 5].value == "CURRENT_REGIMEN") {
+                                if (result[i + 5].value == "ART_START") {
                                     ART_DATE = result[i].value;
                                 }  
                             } 
@@ -770,6 +770,10 @@ module.exports = function (app) {
 
         
     }); 
+
+    applctn.get('/hl7_message', function (req, res) {
+        res.send("T4A HL7 Consumer Server is running on port 1440");
+    });
 
     //ushauri cronjob
     

@@ -13,6 +13,7 @@ const Logs = sequelize.sequelize.define(
         l_name: Sequelize.STRING,
         clinic_number: Sequelize.STRING,
         file_no: Sequelize.STRING,
+        message_type: Sequelize.STRING,
         sending_application: Sequelize.STRING,
         send_log: Sequelize.STRING
     }, {

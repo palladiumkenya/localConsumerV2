@@ -3,9 +3,9 @@ Install git
 
 Install nodejs
 
-Clone the repository at "https://github.com/mHealthKenya/localILConsumerV2" into your desired location
+Clone the repository at "https://github.com/mHealthKenya/localConsumerV2" into your desired location
 
-cd into the newly created "localILConsumerV2" folder
+cd into the newly created "localConsumerV2" folder
 
 Run "npm install"
 

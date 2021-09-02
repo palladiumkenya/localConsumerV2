@@ -40,5 +40,5 @@ run "pm2 startup"
 
 run "pm2 save"
 
-Go to the IL dashboard, under participating systems configure the address for T4A (if it is in the same machine as IL, then http://localhost:1440/hl7_message , otherwise it should point to the machine's IP address as seen by the IL machine, so http://{Ushauri IP}:3000/hl7_message)
+Go to the IL dashboard, under participating systems configure the address for T4A (if it is in the same machine as IL, then http://localhost:3000/hl7_message , otherwise it should point to the machine's IP address as seen by the IL machine, so http://{Ushauri IP}:3000/hl7_message)
 

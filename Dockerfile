@@ -1,27 +1,19 @@
-FROM debian:jessie
+FROM node:latest
 
-RUN apt-get update &&\
-    apt-get install sudo &&\
-    sudo apt-get -y install curl &&\
-    curl -sL https://deb.nodesource.com/setup_10.x | sudo -E bash - &&\
-    sudo apt-get -y install nodejs &&\
-    sudo ln -s /usr/bin/nodejs /usr/local/bin/node
+# Working directory in your container
+WORKDIR /opt/localConsumerV2
 
-RUN node -v
-
-RUN apt-get update || : && apt-get install python
-
-WORKDIR /workspaces
-
-COPY . /workspaces
+COPY package.json .
 
 RUN npm install
 
-RUN npm install yarn -g
 RUN npm run build
 
 ENV TIMEZONE Africa/Narobi
 
+# Copy everything inside the current working directory to the container ideal path
+COPY ./ /opt/localConsumerV2
+
 EXPOSE 1440
 
-CMD [ "npm", "start" ]
+CMD [ “npm”, “start” ] 

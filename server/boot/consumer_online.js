@@ -1004,7 +1004,7 @@ module.exports = function (app) {
     });
 
     
-	//Tell our app to listen on port 3000
+	//Tell our app to listen on port 1440
 
 	applctn.listen(1440, function (err) {
 

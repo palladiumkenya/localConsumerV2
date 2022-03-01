@@ -30,11 +30,11 @@ Change the MFL Code in consumer_online.js on line X to reflect the facility's mf
 
 cd back to the "/server/: folder
 
-run "pm2 start server.js"
+run "sudo pm2 start server.js"
 
-run "pm2 startup"
+run "sudo pm2 startup"
 
-run "pm2 save"
+run "sudo pm2 save"
 
 Go to the IL dashboard, under participating systems configure the address for T4A (if it is in the same machine as IL, then http://localhost:1440/hl7_message , otherwise it should point to the machine's IP address as seen by the IL machine, so http://{Ushauri IP}:1440/hl7_message)
 
